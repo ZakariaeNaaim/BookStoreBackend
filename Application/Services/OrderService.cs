@@ -120,13 +120,13 @@ namespace Application.Services
             return true;
         }
 
-        public async Task<Session?> CreatePaymentSessionAsync(int orderId)
+        public async Task<Session?> CreatePaymentSessionAsync(int orderId, string? domain)
         {
             var order = await _orderRepository.GetByIdAsync(orderId, includeProperties: "User");
             if (order == null) return null;
 
             var details = await _orderDetailRepository.FindAllAsync(x => x.OrderId == orderId, includeProperties: "Book");
-            return await _paymentService.CreateCheckoutSessionAsync(order, details);
+            return await _paymentService.CreateCheckoutSessionAsync(order, details,domain);
         }
 
         public async Task<bool> ConfirmPaymentAsync(int orderId)
