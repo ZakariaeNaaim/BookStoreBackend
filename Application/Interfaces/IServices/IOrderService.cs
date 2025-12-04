@@ -16,7 +16,7 @@ namespace Application.Interfaces.IServices
         Task<bool> StartProcessingAsync(int orderId);
         Task<bool> ShipOrderAsync(OrderDto orderViewModel);
         Task<bool> CancelOrderAsync(int orderId);
-        Task<Session?> CreatePaymentSessionAsync(int orderId);
+        Task<Session?> CreatePaymentSessionAsync(int orderId, string? domain);
         Task<bool> ConfirmPaymentAsync(int orderId);
     }
 

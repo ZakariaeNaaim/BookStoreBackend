@@ -2,6 +2,7 @@
 using Application.Inerfaces.IRepositories;
 using Application.Interfaces.IServices;
 using Application.Mappers;
+using Domain.Entities.Common;
 using Domain.Entities.Identity;
 using Domain.Entities.Orders;
 using Domain.Entities.ShoppingCart;
@@ -128,10 +129,20 @@ namespace Application.Services
             var carts = await _unitOfWork.ShoppingCart.FindAllAsync(x => x.UserId == userId, "Book");
             var user = await _unitOfWork.ApplicationUser.GetByIdAsync(userId);
 
+            if(user == null)
+                throw new Exception("User not found");
+
+            AddressInfo adressInfo = user.AddressInfo;
             var order = new TbOrder
             {
                 UserId = userId,
                 OrderDate = DateTime.Now,
+                City = adressInfo.City,
+                StreetAddress = adressInfo.StreetAddress,
+                State = adressInfo.State,
+                PostalCode = adressInfo.PostalCode,
+                PhoneNumber = user.PhoneNumber,
+                Name = user.Name,
                 User = user
             };
 
@@ -153,7 +164,7 @@ namespace Application.Services
 
             if (user.CompanyId.GetValueOrDefault() == 0)
             {
-                Session session = await _paymentService.CreateCheckoutSessionAsync(order, details);
+                Session session = await _paymentService.CreateCheckoutSessionAsync(order, details,domain);
 
                 order.SessionId = session.Id;
                 order.PaymentIntentId = session.PaymentIntentId;

@@ -10,12 +10,12 @@ namespace Application.Services
 {
     public class StripePaymentService : IPaymentService
     {
-        public async Task<Session> CreateCheckoutSessionAsync(TbOrder order, IEnumerable<TbOrderDetail> details)
+        public async Task<Session> CreateCheckoutSessionAsync(TbOrder order, IEnumerable<TbOrderDetail> details,string? domain)
         {
             var options = new SessionCreateOptions
             {
-                SuccessUrl = $"https://yourdomain.com/api/admin/orders/payment-confirmation/{order.Id}",
-                CancelUrl = $"https://yourdomain.com/api/admin/orders/{order.Id}",
+                SuccessUrl = domain + $"Customer/cart/order-confirmation/{order.Id}",
+                CancelUrl = domain + $"Customer/cart/index",
                 LineItems = new List<SessionLineItemOptions>(),
                 Mode = "payment",
             };
@@ -30,7 +30,7 @@ namespace Application.Services
                         Currency = "usd",
                         ProductData = new SessionLineItemPriceDataProductDataOptions
                         {
-                            Name = item.Book.Title
+                            Name = item?.Book?.Title ?? "test"
                         }
                     },
                     Quantity = item.Quantity,
