@@ -20,11 +20,14 @@ using Infrastructure.Repositories.Orders;
 using Infrastructure.Repositories.ShoppingCarts;
 using Infrastructure.Services;
 using Infrastructure.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Stripe;
+using System.Text;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -109,6 +112,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IPaymentService, StripePaymentService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
+builder.Services.AddScoped<JwtTokenService>();
 
 
 // Repositories
@@ -134,16 +138,34 @@ builder.Services.AddSession(options =>
 #endregion
 
 #region External Login Facebook/Microsoft Authentication
-builder.Services.AddAuthentication().AddFacebook(options =>
+builder.Services.AddAuthentication(options =>
 {
-    options.AppId = builder.Configuration.GetSection("Facebook:AppId").Value;
-    options.AppSecret = builder.Configuration.GetSection("Facebook:AppSecret").Value;
-});
-
-builder.Services.AddAuthentication().AddMicrosoftAccount(options =>
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
 {
-    options.ClientId = builder.Configuration.GetSection("Microsoft:ClientId").Value;
-    options.ClientSecret = builder.Configuration.GetSection("Microsoft:ClientSecret").Value;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]))
+    };
+})
+.AddFacebook(options =>
+{
+    options.AppId = builder.Configuration["Facebook:AppId"];
+    options.AppSecret = builder.Configuration["Facebook:AppSecret"];
+})
+.AddMicrosoftAccount(options =>
+{
+    options.ClientId = builder.Configuration["Microsoft:ClientId"];
+    options.ClientSecret = builder.Configuration["Microsoft:ClientSecret"];
 });
 #endregion
 

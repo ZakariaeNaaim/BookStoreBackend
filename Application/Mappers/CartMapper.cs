@@ -35,6 +35,7 @@ namespace Application.Mappers
 
         public static void MapBookToDetails(TbBook book, BookDetailsDto vm)
         {
+            vm.BookDetails = new BookDetailsForAdminDto();
             vm.BookDetails.Id = book.Id;
             vm.BookDetails.Title = book.Title;
             vm.BookDetails.Author = book.Author;

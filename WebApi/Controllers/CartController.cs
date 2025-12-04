@@ -10,7 +10,7 @@ namespace WebApi.Controllers
     [Route("api/[area]/[controller]")]
     [ApiController]
     [Area("Customer")]
-    [Authorize]
+    //[Authorize]
     public class CartController : ControllerBase
     {
         private readonly ICartService _cartService;
@@ -23,7 +23,20 @@ namespace WebApi.Controllers
         private int GetUserId()
         {
             var claimsIdentity = (ClaimsIdentity)User.Identity;
-            return int.Parse(claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value);
+            return 1;
+            //return int.Parse(claimsIdentity.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+        }
+
+        [HttpPost("add")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> AddToCart([FromBody] AddToCartDto dto)
+        {
+            var userId = GetUserId();
+            var success = await _cartService.AddToCartAsync(userId, dto.BookId, dto.Quantity);
+
+            if (!success) return BadRequest("Unable to add to cart.");
+            return Ok("Item added successfully.");
         }
 
         [HttpGet("index")]

@@ -1,5 +1,7 @@
 using Domain.Entities.Identity;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -11,12 +13,29 @@ namespace WebApi.Controllers
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
-
-        public AuthController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager)
+        private readonly JwtTokenService _jwtTokenService;
+        
+        public AuthController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, JwtTokenService jwtTokenService)
         {
             _signInManager = signInManager;
             _userManager = userManager;
+            _jwtTokenService = jwtTokenService;
         }
+
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        {
+            var user = await _userManager.FindByEmailAsync(request.Email);
+            if (user == null) return Unauthorized();
+
+            var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
+            if (!result.Succeeded) return Unauthorized();
+
+            var token = await _jwtTokenService.GenerateToken(user);
+
+            return Ok(new { token, user });
+        }
+
 
         [HttpGet("external-login")]
         public IActionResult ExternalLogin(string provider, string returnUrl = null)
@@ -29,71 +48,38 @@ namespace WebApi.Controllers
         [HttpGet("external-auth-callback")]
         public async Task<IActionResult> ExternalLoginCallback(string returnUrl = null, string remoteError = null)
         {
-            // Default return URL to frontend if not provided
-            returnUrl = returnUrl ?? "http://localhost:4200";
-
+            returnUrl = returnUrl ?? "http://localhost:4200/login";
             if (remoteError != null)
-            {
                 return BadRequest(new { message = $"Error from external provider: {remoteError}" });
-            }
 
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
-            {
                 return BadRequest(new { message = "Error loading external login information." });
-            }
 
-            // Sign in the user with this external login provider if the user already has a login.
-            var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, isPersistent: false, bypassTwoFactor: true);
+            var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, false);
+            ApplicationUser user;
+
             if (result.Succeeded)
             {
-                return Redirect(returnUrl);
-            }
-
-            if (result.IsLockedOut)
-            {
-                return BadRequest(new { message = "User account locked out." });
+                user = await _userManager.FindByLoginAsync(info.LoginProvider, info.ProviderKey);
             }
             else
             {
-                // If the user does not have an account, then create an account.
                 var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-                var name = info.Principal.FindFirstValue(ClaimTypes.Name);
-
-                if (email != null)
+                user = await _userManager.FindByEmailAsync(email);
+                if (user == null)
                 {
-                    var user = await _userManager.FindByEmailAsync(email);
-                    if (user == null)
-                    {
-                        user = new ApplicationUser 
-                        { 
-                            UserName = email, 
-                            Email = email, 
-                            Name = name ?? email,
-                            // Initialize required fields if any
-                            AddressInfo = new Domain.Entities.Common.AddressInfo() 
-                        };
-                        var createResult = await _userManager.CreateAsync(user);
-                        if (createResult.Succeeded)
-                        {
-                            await _userManager.AddToRoleAsync(user, "Customer");
-                        }
-                        else
-                        {
-                            return BadRequest(new { message = "Failed to create user.", errors = createResult.Errors });
-                        }
-                    }
-
-                    var addLoginResult = await _userManager.AddLoginAsync(user, info);
-                    if (addLoginResult.Succeeded)
-                    {
-                        await _signInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
-                        return Redirect(returnUrl);
-                    }
+                    user = new ApplicationUser { UserName = email, Email = email, Name = email };
+                    await _userManager.CreateAsync(user);
+                    await _userManager.AddToRoleAsync(user, "Customer");
                 }
-
-                return BadRequest(new { message = "Error logging in." });
+                await _userManager.AddLoginAsync(user, info);
             }
+
+            var token = await _jwtTokenService.GenerateToken(user);
+
+            // Instead of redirect, return JSON so Angular can consume it
+            return Redirect($"{returnUrl}?token={token}");
         }
     }
 }

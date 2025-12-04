@@ -177,10 +177,25 @@ namespace Infrastructure.Data.DbInitializer
 
         private static List<TbBookImage> _SeedBookImages() => new()
         {
-            new TbBookImage { ImageUrl = @"\uploads\images\books\book-1\fortune of time.jpg", BookId = 1, IsMainImage = true },
-            new TbBookImage { ImageUrl = @"\uploads\images\books\book-1\fortune of time back.jpg", BookId = 1, IsMainImage = false },
-            // … repeat for other books
+            new TbBookImage { ImageUrl = "assets/images/books/book-1/fortune of time.jpg", BookId = 1, IsMainImage = true },
+            new TbBookImage { ImageUrl = "assets/images/books/book-1/fortune of time back.jpg", BookId = 1, IsMainImage = false },
+
+            new TbBookImage { ImageUrl = "assets/images/books/book-2/dark skies.jpg", BookId = 2, IsMainImage = true },
+            new TbBookImage { ImageUrl = "assets/images/books/book-2/dark skies back.jpg", BookId = 2, IsMainImage = false },
+
+            new TbBookImage { ImageUrl = "assets/images/books/book-3/vanish in the sunset.jpg", BookId = 3, IsMainImage = true },
+            new TbBookImage { ImageUrl = "assets/images/books/book-3/vanish in the sunset back.jpg", BookId = 3, IsMainImage = false },
+
+            new TbBookImage { ImageUrl = "assets/images/books/book-4/cotton candy.jpg", BookId = 4, IsMainImage = true },
+            new TbBookImage { ImageUrl = "assets/images/books/book-4/cotton candy back.jpg", BookId = 4, IsMainImage = false },
+
+            new TbBookImage { ImageUrl = "assets/images/books/book-5/rock in the ocean.jpg", BookId = 5, IsMainImage = true },
+            new TbBookImage { ImageUrl = "assets/images/books/book-5/rock in the ocean back.jpg", BookId = 5, IsMainImage = false },
+
+            new TbBookImage { ImageUrl = "assets/images/books/book-6/leaves and wonders.jpg", BookId = 6, IsMainImage = true },
+            new TbBookImage { ImageUrl = "assets/images/books/book-6/leaves and wonder back.jpg", BookId = 6, IsMainImage = false }
         };
+
 
         private static List<TbCompany> _SeedCompanies() => new()
         {

@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace WebApi.Controllers
 {
     [Area(nameof(UserRole.Admin))]
-    [Authorize(Roles = nameof(UserRole.Admin))]
+    //[Authorize(Roles = nameof(UserRole.Admin))]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;

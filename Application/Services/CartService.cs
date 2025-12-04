@@ -23,6 +23,30 @@ namespace Application.Services
             _unitOfWork = unitOfWork;
             _paymentService = paymentService;
         }
+        public async Task<bool> AddToCartAsync(int userId, int bookId, int quantity)
+        {
+            var existingCart = await _unitOfWork.ShoppingCart
+                .GetAsync(c => c.UserId == userId && c.BookId == bookId);
+
+            if (existingCart != null)
+            {
+                existingCart.Quantity += quantity;
+                _unitOfWork.ShoppingCart.Update(existingCart);
+            }
+            else
+            {
+                var newCart = new TbShoppingCart
+                {
+                    UserId = userId,
+                    BookId = bookId,
+                    Quantity = quantity
+                };
+                await _unitOfWork.ShoppingCart.AddAsync(newCart);
+            }
+
+            await _unitOfWork.SaveAsync();
+            return true;
+        }
 
         public async Task<ShoppingCartDto> GetCartAsync(int userId)
         {
