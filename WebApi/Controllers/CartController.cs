@@ -27,6 +27,8 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("index")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ShoppingCartDto>> Index()
         {
             var userId = GetUserId();
@@ -35,6 +37,8 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("increment/{cartId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> IncrementQuantity(int cartId)
         {
             var success = await _cartService.IncrementQuantityAsync(cartId);
@@ -43,6 +47,8 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("decrement/{cartId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DecrementQuantity(int cartId)
         {
             var success = await _cartService.DecrementQuantityAsync(cartId);
@@ -51,6 +57,8 @@ namespace WebApi.Controllers
         }
 
         [HttpDelete("{cartId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int cartId)
         {
             var success = await _cartService.DeleteItemAsync(cartId);
@@ -59,6 +67,8 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("summary")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ShoppingCartDto>> Summary()
         {
             var userId = GetUserId();
@@ -67,6 +77,8 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("place-order")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> PlaceOrder()
         {
             var userId = GetUserId();
@@ -82,6 +94,8 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("order-confirmation/{orderId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> OrderConfirmation(int orderId)
         {
             await _cartService.ConfirmOrderAsync(orderId);

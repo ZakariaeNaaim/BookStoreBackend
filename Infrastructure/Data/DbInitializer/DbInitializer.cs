@@ -87,7 +87,8 @@ namespace Infrastructure.Data.DbInitializer
             }
             catch (Exception ex)
             {
-                // log error if needed
+                Console.WriteLine($"An error occurred while initializing the database: {ex.Message}");
+                throw;
             }
         }
 

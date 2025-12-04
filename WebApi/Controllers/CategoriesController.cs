@@ -8,7 +8,7 @@ namespace WebApi.Controllers
 {
 	[Route("api/admin/[controller]")]
 	[ApiController]
-	[Authorize(Roles = nameof(UserRole.Admin))]
+	//[Authorize(Roles = nameof(UserRole.Admin))]
     public class CategoriesController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
@@ -19,6 +19,8 @@ namespace WebApi.Controllers
         }
 
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetAll()
         {
             var categories = await _categoryService.GetAllAsync();
@@ -26,6 +28,8 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(int id)
         {
             var category = await _categoryService.GetByIdAsync(id);
@@ -36,6 +40,8 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Create([FromBody] CategoryDto categoryViewModel)
         {
             var id = await _categoryService.CreateAsync(categoryViewModel);
@@ -43,6 +49,8 @@ namespace WebApi.Controllers
         }
 
         [HttpPut("{id:int}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Update(int id, [FromBody] CategoryDto categoryViewModel)
         {
             var result = await _categoryService.UpdateAsync(id, categoryViewModel);
@@ -53,6 +61,8 @@ namespace WebApi.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _categoryService.DeleteAsync(id);

@@ -1,18 +1,18 @@
-﻿//using Models.ViewModels.Admin.Books;
-//using Microsoft.EntityFrameworkCore;
-//using Microsoft.EntityFrameworkCore.Metadata.Builders;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Application.Dtos.Books;
 
-//namespace Infrastructure.Configurations
-//{
-//    internal class BookListViewModelConfiguration : IEntityTypeConfiguration<BookListViewModel>
-//    {
-//        public void Configure(EntityTypeBuilder<BookListViewModel> builder)
-//        {
-//            builder.HasNoKey()
-//                .ToView("BookList_View");
+namespace Infrastructure.Configurations
+{
+    internal class BookListViewModelConfiguration : IEntityTypeConfiguration<BookListDto>
+    {
+        public void Configure(EntityTypeBuilder<BookListDto> builder)
+        {
+            builder.HasNoKey()
+                .ToView("BookList_View");
 
-//            builder.Property(b => b.Price)
-//                   .HasColumnType("decimal(18,2)");
-//        }
-//    }
-//}
+            builder.Property(b => b.Price)
+                   .HasColumnType("decimal(18,2)");
+        }
+    }
+}

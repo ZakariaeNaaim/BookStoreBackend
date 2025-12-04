@@ -1,21 +1,79 @@
 using Application.Inerfaces.IRepositories;
 using Application.Inerfaces.IRepositories.Generic;
+using Application.Inerfaces.IRepositories.IBooks;
+using Application.Inerfaces.IRepositories.ICompanies;
+using Application.Inerfaces.IRepositories.IIdentity;
+using Application.Inerfaces.IRepositories.IOrders;
+using Application.Inerfaces.IRepositories.IShoppingCarts;
+using Application.Interfaces.IServices;
+using Application.Services;
 using Domain.Entities.Identity;
 using Infrastructure.Configurations.External;
 using Infrastructure.Data;
 using Infrastructure.Data.DbInitializer;
 using Infrastructure.Repositories;
+using Infrastructure.Repositories.Books;
+using Infrastructure.Repositories.Companies;
 using Infrastructure.Repositories.Generic;
+using Infrastructure.Repositories.Identity;
+using Infrastructure.Repositories.Orders;
+using Infrastructure.Repositories.ShoppingCarts;
 using Infrastructure.Services;
+using Infrastructure.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using Stripe;
 
-var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddControllersWithViews();
 
-builder.Services.AddRazorPages();
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAngular",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:4200")
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+});
+
+builder.Services.AddControllers();
+
+// Swagger/OpenAPI
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "My API",
+        Version = "v1",
+        Description = "API documentation for Admin, Customer, and Identity endpoints"
+    });
+
+    // Optional: Add JWT bearer auth support
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter 'Bearer' followed by your token"
+    });
+
+    options.AddSecurityRequirement(doc => new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecuritySchemeReference("Bearer"),
+            new List<string>()
+        }
+    });
+});
+
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -40,6 +98,29 @@ builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IReadOnlyRepository<>), typeof(ReadOnlyRepository<>));
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IDbInitializer, DbInitializer>();
+
+
+builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddScoped<ICartService, CartService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ICompanyService, CompanyService>();
+builder.Services.AddScoped<IHomeService, HomeService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IPaymentService, StripePaymentService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IFileStorageService, FileStorageService>();
+
+
+// Repositories
+builder.Services.AddScoped<IBookRepository, BookRepository>();
+builder.Services.AddScoped<IBookImageRepository, BookImageRepository>();
+builder.Services.AddScoped<IShoppingCartRepository, ShoppingCartRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ICompanyRepository, CompanyRepository>();
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderDetailRepository, OrderDetailRepository>();
+builder.Services.AddScoped<IApplicationUserRepository, ApplicationUserRepository>();
+
 #endregion
 
 #region Session Management
@@ -53,22 +134,40 @@ builder.Services.AddSession(options =>
 #endregion
 
 #region External Login Facebook/Microsoft Authentication
-//builder.Services.AddAuthentication().AddFacebook(options =>
-//{
-//    options.AppId = builder.Configuration.GetSection("Facebook:AppId").Value;
-//    options.AppSecret = builder.Configuration.GetSection("Facebook:AppSecret").Value;
-//});
+builder.Services.AddAuthentication().AddFacebook(options =>
+{
+    options.AppId = builder.Configuration.GetSection("Facebook:AppId").Value;
+    options.AppSecret = builder.Configuration.GetSection("Facebook:AppSecret").Value;
+});
 
-//builder.Services.AddAuthentication().AddMicrosoftAccount(options =>
-//{
-//    options.ClientId = builder.Configuration.GetSection("Microsoft:ClientId").Value;
-//    options.ClientSecret = builder.Configuration.GetSection("Microsoft:ClientSecret").Value;
-//});
+builder.Services.AddAuthentication().AddMicrosoftAccount(options =>
+{
+    options.ClientId = builder.Configuration.GetSection("Microsoft:ClientId").Value;
+    options.ClientSecret = builder.Configuration.GetSection("Microsoft:ClientSecret").Value;
+});
 #endregion
 
 var app = builder.Build();
 
 SeedDatabase();
+
+if (app.Environment.IsDevelopment())
+{
+    app.Use(async (context, next) =>
+    {
+        context.Response.Headers.Add("Content-Security-Policy",
+            "default-src 'self'; connect-src 'self' http://localhost:4200 https://localhost:44381; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'");
+        await next();
+    });
+
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API v1");
+        //c.RoutePrefix = "swagger"; // URL: /swagger
+        c.RoutePrefix = string.Empty;
+    });
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -78,6 +177,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
@@ -85,17 +185,20 @@ StripeConfiguration.ApiKey = builder.Configuration.GetSection("Stripe:SecretKey"
 
 app.UseRouting();
 
+app.UseCors("AllowAngular");
+
 app.UseAuthentication();
 
 app.UseAuthorization();
 
 app.UseSession();
 
+app.MapControllers();
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{area=Customer}/{controller=Home}/{action=Index}/{id?}");
 
-app.MapRazorPages();
 
 app.Run();
 

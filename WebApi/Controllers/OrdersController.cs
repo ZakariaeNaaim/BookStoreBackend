@@ -20,7 +20,9 @@ namespace WebApi.Controllers
         }
 
         [HttpGet]
-		public IActionResult GetAll(string status = "all")
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public IActionResult GetAll(string status = "all")
 		{
 			try
 			{
