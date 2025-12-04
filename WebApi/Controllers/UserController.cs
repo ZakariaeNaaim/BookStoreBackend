@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace WebApi.Controllers
 {
     [Area(nameof(UserRole.Admin))]
-    [Authorize(Roles = nameof(UserRole.Admin))]
+    //[Authorize(Roles = nameof(UserRole.Admin))]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -21,6 +21,8 @@ namespace WebApi.Controllers
         }
 
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetAll()
         {
             var users = await _userService.GetAllAsync();
@@ -28,6 +30,8 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("{id:int}/permissions")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetPermissions(int id)
         {
             var userPermissions = await _userService.GetUserPermissionsAsync(id);
@@ -38,6 +42,8 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("change-permission")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> ChangePermission([FromBody] UserPermissionsDto viewModel)
         {
             var result = await _userService.ChangePermissionAsync(viewModel);
@@ -48,6 +54,8 @@ namespace WebApi.Controllers
         }
 
         [HttpPost("lock-unlock/{id:int}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> LockUnlock(int id)
         {
             var result = await _userService.LockUnlockAsync(id);

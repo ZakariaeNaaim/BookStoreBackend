@@ -8,7 +8,7 @@ namespace WebApi.Controllers
 {
     [Route("api/admin/[controller]")]
     [ApiController]
-    [Authorize(Roles = nameof(UserRole.Admin))]
+    //[Authorize(Roles = nameof(UserRole.Admin))]
     public class CompaniesController : ControllerBase
     {
         private readonly ICompanyService _companyService;
@@ -19,6 +19,8 @@ namespace WebApi.Controllers
         }
 
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetAll()
         {
             var companies = await _companyService.GetAllAsync();
@@ -26,6 +28,8 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("{id:int}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetById(int id)
         {
             var company = await _companyService.GetByIdAsync(id);
@@ -36,6 +40,8 @@ namespace WebApi.Controllers
         }
 
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Create([FromBody] CompanyDto companyViewModel)
         {
             var id = await _companyService.CreateAsync(companyViewModel);
@@ -43,6 +49,8 @@ namespace WebApi.Controllers
         }
 
         [HttpPut("{id:int}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Update(int id, [FromBody] CompanyDto companyViewModel)
         {
             var result = await _companyService.UpdateAsync(id, companyViewModel);
@@ -53,6 +61,8 @@ namespace WebApi.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)
         {
             var result = await _companyService.DeleteAsync(id);

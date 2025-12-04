@@ -7,6 +7,7 @@ namespace Application.Interfaces.IServices
 {
     public interface ICartService
     {
+        Task<bool> AddToCartAsync(int userId, int bookId, int quantity);
         Task<ShoppingCartDto> GetCartAsync(int userId);
         Task<ShoppingCartDto> GetSummaryAsync(int userId);
         Task<bool> IncrementQuantityAsync(int cartId);

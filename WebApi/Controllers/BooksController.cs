@@ -9,7 +9,7 @@ namespace WebApi.Controllers
 {
 	[Route("api/admin/[controller]")]
 	[ApiController]
-	[Authorize(Roles = nameof(UserRole.Admin))]
+	//[Authorize(Roles = nameof(UserRole.Admin))]
     public class BooksController : ControllerBase
     {
         private readonly IBookService _bookService;
@@ -20,6 +20,8 @@ namespace WebApi.Controllers
         }
 
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetAll()
         {
             var books = await _bookService.GetAllAsync();
@@ -27,6 +29,8 @@ namespace WebApi.Controllers
         }
 
         [HttpDelete("{id:int}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)
         {
             if (id <= 0)

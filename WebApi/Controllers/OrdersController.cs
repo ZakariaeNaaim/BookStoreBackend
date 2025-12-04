@@ -9,7 +9,7 @@ namespace WebApi.Controllers
 {
 	[Route("api/admin/[controller]")]
 	[ApiController]
-	[Authorize]
+	//[Authorize]
 	public class OrdersController : ControllerBase
 	{
 		private readonly IUnitOfWork _unitOfWork;
@@ -20,7 +20,9 @@ namespace WebApi.Controllers
         }
 
         [HttpGet]
-		public IActionResult GetAll(string status = "all")
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public IActionResult GetAll(string status = "all")
 		{
 			try
 			{
@@ -32,7 +34,7 @@ namespace WebApi.Controllers
 				else
 				{
 					ClaimsIdentity claimsIdentity = (ClaimsIdentity)User.Identity;
-					int userId = int.Parse(claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value);
+					int userId = int.Parse(claimsIdentity.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
 					lstOrders = _unitOfWork.Order.FindAllQueryable(x => x.UserId == userId ,includeProperties: "User");
 				}

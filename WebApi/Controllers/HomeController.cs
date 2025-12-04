@@ -27,6 +27,8 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("index")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<IEnumerable<BookHomeDto>>> Index()
         {
             var books = await _homeService.GetHomeBooksAsync();
@@ -34,6 +36,8 @@ namespace WebApi.Controllers
         }
 
         [HttpGet("details/{bookId}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<BookDetailsDto>> Details(int bookId)
         {
             if (bookId <= 0) return BadRequest("Invalid book id.");
@@ -46,6 +50,8 @@ namespace WebApi.Controllers
 
         [HttpPost("add-to-cart")]
         [Authorize]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AddToCart([FromBody] AddToCartDto viewModel)
         {
             if (!ModelState.IsValid)
