@@ -9,8 +9,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace WebApi.Controllers
 {
+    [Route("api/admin/[controller]")]
     [Area(nameof(UserRole.Admin))]
-    //[Authorize(Roles = nameof(UserRole.Admin))]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -26,7 +27,7 @@ namespace WebApi.Controllers
         public async Task<IActionResult> GetAll()
         {
             var users = await _userService.GetAllAsync();
-            return Ok(new { success = true, data = users });
+            return Ok(users);
         }
 
         [HttpGet("{id:int}/permissions")]
@@ -38,7 +39,7 @@ namespace WebApi.Controllers
             if (userPermissions == null)
                 return NotFound(new { success = false, message = $"No user found with Id = {id}" });
 
-            return Ok(new { success = true, data = userPermissions });
+            return Ok(userPermissions);
         }
 
         [HttpPost("change-permission")]
@@ -53,7 +54,7 @@ namespace WebApi.Controllers
             return Ok(new { success = true, message = "User role changed successfully!" });
         }
 
-        [HttpPost("lock-unlock/{id:int}")]
+        [HttpPost("lock-unlock")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> LockUnlock(int id)

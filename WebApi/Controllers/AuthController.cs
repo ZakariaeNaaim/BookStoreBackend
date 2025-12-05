@@ -36,6 +36,54 @@ namespace WebApi.Controllers
             return Ok(new { token, user });
         }
 
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        {
+            // Check if user already exists
+            var existingUser = await _userManager.FindByEmailAsync(request.Email);
+            if (existingUser != null)
+            {
+                return BadRequest(new { message = "User with this email already exists" });
+            }
+
+            // Create new user
+            var user = new ApplicationUser
+            {
+                UserName = request.Email,
+                Email = request.Email,
+                //Name = request.Name ?? request.Email,
+                Name = request.Email,
+                //PhoneNumber = request.PhoneNumber,
+                PhoneNumber = "14444",
+                AddressInfo = new Domain.Entities.Common.AddressInfo
+                {
+                    //StreetAddress = request.StreetAddress,
+                    StreetAddress = "Azhar",
+                    //City = request.City,
+                    City ="Casablanca",
+                    //State = request.State,
+                    State ="Morocoo",
+                    //PostalCode = request.PostalCode
+                    PostalCode = "21255"
+                }
+            };
+
+            var result = await _userManager.CreateAsync(user, request.Password);
+            
+            if (!result.Succeeded)
+            {
+                return BadRequest(new { message = "Failed to create user", errors = result.Errors });
+            }
+
+            // Add to Customer role by default
+            await _userManager.AddToRoleAsync(user, "Customer");
+
+            // Generate token and sign in
+            var token = await _jwtTokenService.GenerateToken(user);
+
+            return Ok(new { token, user });
+        }
+
 
         [HttpGet("external-login")]
         public IActionResult ExternalLogin(string provider, string returnUrl = null)

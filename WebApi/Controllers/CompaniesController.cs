@@ -8,7 +8,7 @@ namespace WebApi.Controllers
 {
     [Route("api/admin/[controller]")]
     [ApiController]
-    //[Authorize(Roles = nameof(UserRole.Admin))]
+    [Authorize(Roles = nameof(UserRole.Admin))]
     public class CompaniesController : ControllerBase
     {
         private readonly ICompanyService _companyService;
@@ -24,7 +24,7 @@ namespace WebApi.Controllers
         public async Task<IActionResult> GetAll()
         {
             var companies = await _companyService.GetAllAsync();
-            return Ok(new { success = true, data = companies });
+            return Ok(companies);
         }
 
         [HttpGet("{id:int}")]
@@ -36,7 +36,7 @@ namespace WebApi.Controllers
             if (company == null)
                 return NotFound(new { success = false, message = $"No company found with Id = ({id})" });
 
-            return Ok(new { success = true, data = company });
+            return Ok(company);
         }
 
         [HttpPost]

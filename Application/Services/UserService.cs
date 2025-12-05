@@ -15,14 +15,14 @@ namespace Application.Services
 {
     public class UserService : IUserService
     {
-        private readonly IReadOnlyRepository<UserListViewModel> _readOnlyRepository;
+        private readonly IReadOnlyRepository<ApplicationUser> _readOnlyRepository;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly IApplicationUserRepository _userRepository;
-        private readonly ICompanyRepository _companyRepository; // assume you have this
+        private readonly ICompanyRepository _companyRepository;
 
         public UserService(
-            IReadOnlyRepository<UserListViewModel> readOnlyRepository,
+            IReadOnlyRepository<ApplicationUser> readOnlyRepository,
             UserManager<ApplicationUser> userManager,
             RoleManager<ApplicationRole> roleManager,
             IApplicationUserRepository userRepository,
@@ -35,7 +35,7 @@ namespace Application.Services
             _companyRepository = companyRepository;
         }
 
-        public async Task<IEnumerable<UserListViewModel>> GetAllAsync()
+        public async Task<IEnumerable<ApplicationUser>> GetAllAsync()
         {
             return await _readOnlyRepository.GetAllAsync();
         }
