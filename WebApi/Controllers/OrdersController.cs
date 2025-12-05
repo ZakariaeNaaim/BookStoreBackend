@@ -9,7 +9,7 @@ namespace WebApi.Controllers
 {
 	[Route("api/admin/[controller]")]
 	[ApiController]
-	//[Authorize]
+	[Authorize]
 	public class OrdersController : ControllerBase
 	{
 		private readonly IUnitOfWork _unitOfWork;
@@ -34,7 +34,14 @@ namespace WebApi.Controllers
 				else
 				{
 					ClaimsIdentity claimsIdentity = (ClaimsIdentity)User.Identity;
-					int userId = int.Parse(claimsIdentity.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+					var userIdClaim = claimsIdentity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+					
+					if (string.IsNullOrEmpty(userIdClaim))
+					{
+						return Unauthorized(new { success = false, message = "User ID not found in token claims" });
+					}
+					
+					int userId = int.Parse(userIdClaim);
 
 					lstOrders = _unitOfWork.Order.FindAllQueryable(x => x.UserId == userId ,includeProperties: "User");
 				}
@@ -57,7 +64,7 @@ namespace WebApi.Controllers
 						break;
 				}
 
-				return Ok(new { success = true, data = lstOrders });
+				return Ok(lstOrders);
 			}
 			catch (Exception ex)
 			{

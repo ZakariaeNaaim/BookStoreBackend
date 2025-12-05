@@ -8,7 +8,7 @@ namespace WebApi.Controllers
 {
 	[Route("api/admin/[controller]")]
 	[ApiController]
-	//[Authorize(Roles = nameof(UserRole.Admin))]
+	[Authorize(Roles = nameof(UserRole.Admin))]
     public class CategoriesController : ControllerBase
     {
         private readonly ICategoryService _categoryService;
@@ -24,7 +24,7 @@ namespace WebApi.Controllers
         public async Task<IActionResult> GetAll()
         {
             var categories = await _categoryService.GetAllAsync();
-            return Ok(new { success = true, data = categories });
+            return Ok( categories);
         }
 
         [HttpGet("{id:int}")]
@@ -36,7 +36,7 @@ namespace WebApi.Controllers
             if (category == null)
                 return NotFound(new { success = false, message = $"No category found with Id = ({id})" });
 
-            return Ok(new { success = true, data = category });
+            return Ok(category);
         }
 
         [HttpPost]

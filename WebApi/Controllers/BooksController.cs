@@ -9,7 +9,7 @@ namespace WebApi.Controllers
 {
 	[Route("api/admin/[controller]")]
 	[ApiController]
-	//[Authorize(Roles = nameof(UserRole.Admin))]
+	[Authorize(Roles = nameof(UserRole.Admin))]
     public class BooksController : ControllerBase
     {
         private readonly IBookService _bookService;
