@@ -32,8 +32,19 @@ namespace WebApi.Controllers
             if (!result.Succeeded) return Unauthorized();
 
             var token = await _jwtTokenService.GenerateToken(user);
+            var roles = await _userManager.GetRolesAsync(user);
 
-            return Ok(new { token, user });
+            return Ok(new
+            {
+                token,
+                user = new
+                {
+                    id = user.Id.ToString(),
+                    email = user.Email,
+                    name = user.Name,
+                    role = roles.FirstOrDefault() ?? "Customer"
+                }
+            });
         }
 
         [HttpPost("register")]
@@ -80,8 +91,19 @@ namespace WebApi.Controllers
 
             // Generate token and sign in
             var token = await _jwtTokenService.GenerateToken(user);
+            var roles = await _userManager.GetRolesAsync(user);
 
-            return Ok(new { token, user });
+            return Ok(new
+            {
+                token,
+                user = new
+                {
+                    id = user.Id.ToString(),
+                    email = user.Email,
+                    name = user.Name,
+                    role = roles.FirstOrDefault() ?? "Customer"
+                }
+            });
         }
 
 
@@ -125,9 +147,20 @@ namespace WebApi.Controllers
             }
 
             var token = await _jwtTokenService.GenerateToken(user);
+            var roles = await _userManager.GetRolesAsync(user);
+            var userRole = roles.FirstOrDefault() ?? "Customer";
+
+            // Encode user info to pass to Angular
+            var userJson = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                id = user.Id.ToString(),
+                email = user.Email,
+                name = user.Name,
+                role = userRole
+            });
 
             // Instead of redirect, return JSON so Angular can consume it
-            return Redirect($"{returnUrl}?token={token}");
+            return Redirect($"{returnUrl}?token={token}&user={System.Web.HttpUtility.UrlEncode(userJson)}");
         }
     }
 }
