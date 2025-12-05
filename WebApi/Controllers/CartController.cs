@@ -10,7 +10,7 @@ namespace WebApi.Controllers
     [Route("api/[area]/[controller]")]
     [ApiController]
     [Area("Customer")]
-    //[Authorize]
+    [Authorize]
     public class CartController : ControllerBase
     {
         private readonly ICartService _cartService;
@@ -23,8 +23,14 @@ namespace WebApi.Controllers
         private int GetUserId()
         {
             var claimsIdentity = (ClaimsIdentity)User.Identity;
-            return 1;
-            //return int.Parse(claimsIdentity.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            var userIdClaim = claimsIdentity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                throw new UnauthorizedAccessException("User ID not found in token claims");
+            }
+            
+            return int.Parse(userIdClaim);
         }
 
         [HttpPost("add")]

@@ -1,6 +1,6 @@
 ﻿namespace Application.Dtos.Identity
 {
-	public class UserListViewModel
+	public class UserListDto
 	{
 		public int Id { get; set; }
         public string Name { get; set; }

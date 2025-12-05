@@ -23,7 +23,14 @@ namespace WebApi.Controllers
         private int GetUserId()
         {
             var claimsIdentity = (ClaimsIdentity)User.Identity;
-            return int.Parse(claimsIdentity.FindFirst(ClaimTypes.NameIdentifier).Value);
+            var userIdClaim = claimsIdentity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            
+            if (string.IsNullOrEmpty(userIdClaim))
+            {
+                throw new UnauthorizedAccessException("User ID not found in token claims");
+            }
+            
+            return int.Parse(userIdClaim);
         }
 
         [HttpGet("index")]
