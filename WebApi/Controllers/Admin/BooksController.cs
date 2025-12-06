@@ -3,6 +3,7 @@ using Application.Dtos.Common;
 using Application.Inerfaces.IRepositories;
 using Application.Inerfaces.IRepositories.Generic;
 using Application.Interfaces.IServices;
+using Domain.Entities.Books;
 using Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,6 +30,16 @@ namespace WebApi.Controllers.Admin
         {
             var books = await _bookService.GetAllAsync();
             return Ok(ApiResponseDto<IEnumerable<BookListDto>>.SuccessResponse(books));
+        }
+
+        [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<TbBook>> Get(int id)
+        {
+            var book = await _bookService.GetByIdAsync(id);
+            if (book == null) return NotFound();
+            return Ok(book);
         }
 
         [HttpDelete("{id:int}")]

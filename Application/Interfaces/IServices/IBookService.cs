@@ -8,6 +8,7 @@ namespace Application.Interfaces.IServices
     public interface IBookService
     {
         Task<IEnumerable<BookListDto>> GetAllAsync();
+        Task<Domain.Entities.Books.TbBook?> GetByIdAsync(int id);
         Task<bool> DeleteAsync(int id);
     }
 }

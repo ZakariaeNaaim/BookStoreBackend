@@ -37,6 +37,11 @@ namespace Application.Services
             return await _readOnlyRepository.GetAllAsync();
         }
 
+        public async Task<Domain.Entities.Books.TbBook?> GetByIdAsync(int id)
+        {
+            return await _bookRepository.GetByIdAsync(id);
+        }
+
         public async Task<bool> DeleteAsync(int id)
         {
             var book = await _bookRepository.GetByIdAsync(id);
