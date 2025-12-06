@@ -4,18 +4,24 @@ using Stripe;
 using Stripe.Checkout;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Application.Services
 {
     public class StripePaymentService : IPaymentService
     {
-        public async Task<Session> CreateCheckoutSessionAsync(TbOrder order, IEnumerable<TbOrderDetail> details,string? domain)
+        public async Task<Session> CreateCheckoutSessionAsync(TbOrder order, IEnumerable<TbOrderDetail> details, string? domain)
         {
+            // Hardcode frontend URL for Stripe redirects
+            var frontendUrl = "http://localhost:4200/";
+
             var options = new SessionCreateOptions
             {
-                SuccessUrl = domain + $"Customer/cart/order-confirmation/{order.Id}",
-                CancelUrl = domain + $"Customer/cart/index",
+                // Redirect to Angular routes after payment
+                SuccessUrl = frontendUrl + $"customer/order-confirmation/{order.Id}",
+                CancelUrl = frontendUrl + "customer/cart",
                 LineItems = new List<SessionLineItemOptions>(),
                 Mode = "payment",
             };
@@ -26,11 +32,11 @@ namespace Application.Services
                 {
                     PriceData = new SessionLineItemPriceDataOptions
                     {
-                        UnitAmount = (long)(item.Price * 100),
+                        UnitAmount = (long)(item.Price * 100),  // Stripe uses cents
                         Currency = "usd",
                         ProductData = new SessionLineItemPriceDataProductDataOptions
                         {
-                            Name = item?.Book?.Title ?? "test"
+                            Name = item?.Book?.Title ?? "Book"
                         }
                     },
                     Quantity = item.Quantity,
@@ -39,7 +45,7 @@ namespace Application.Services
 
             var service = new SessionService();
             var session = await service.CreateAsync(options);
-            return session; 
+            return session;
         }
 
         public async Task<bool> RefundAsync(string paymentIntentId)
@@ -61,5 +67,4 @@ namespace Application.Services
             return session.PaymentStatus.ToLower() == "paid";
         }
     }
-
 }

@@ -227,6 +227,16 @@ namespace Application.Services
             if (cart.Quantity <= 100) return cart.Book.Price50;
             return cart.Book.Price100;
         }
+
+        public async Task ClearCartAsync(int userId)
+        {
+            var carts = await _unitOfWork.ShoppingCart.FindAllAsync(c => c.UserId == userId);
+            if (carts.Any())
+            {
+                _unitOfWork.ShoppingCart.RemoveRange(carts);
+                await _unitOfWork.SaveAsync();
+            }
+        }
     }
 
 }

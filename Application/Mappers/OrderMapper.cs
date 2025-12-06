@@ -44,9 +44,9 @@ namespace Application.Mappers
                     PaymentDueDate = order.PaymentDueDate,
                     SessionId = order.SessionId,
                     PaymentIntentId = order.PaymentIntentId,
-                    UserId = order.UserId
-                },
-                OrderDetails = details.ToList()
+                    UserId = order.UserId,
+                    OrderDetails = details.ToList() // Assign to TbOrder.OrderDetails
+                }
             };
         }
 
