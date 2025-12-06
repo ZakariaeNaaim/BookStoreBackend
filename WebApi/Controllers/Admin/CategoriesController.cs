@@ -4,10 +4,11 @@ using Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace WebApi.Controllers
+namespace WebApi.Controllers.Admin
 {
-	[Route("api/admin/[controller]")]
+	[Route("api/[area]/[controller]")]
 	[ApiController]
+	[Area("Admin")]
 	[Authorize(Roles = nameof(UserRole.Admin))]
     public class CategoriesController : ControllerBase
     {

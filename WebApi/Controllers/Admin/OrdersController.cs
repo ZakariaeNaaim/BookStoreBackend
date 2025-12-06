@@ -7,10 +7,11 @@ using Domain.Enums;
 using Application.Dtos.Orders;
 using Application.Dtos.Common;
 
-namespace WebApi.Controllers
+namespace WebApi.Controllers.Admin
 {
-	[Route("api/admin/[controller]")]
+	[Route("api/[area]/[controller]")]
 	[ApiController]
+	[Area("Admin")]
 	[Authorize]
 	public class OrdersController : ControllerBase
 	{
