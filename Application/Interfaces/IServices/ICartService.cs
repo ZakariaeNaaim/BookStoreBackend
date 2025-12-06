@@ -15,6 +15,8 @@ namespace Application.Interfaces.IServices
         Task<bool> DeleteItemAsync(int cartId);
         Task<string?> PlaceOrderAsync(int userId, string domain);
         Task ConfirmOrderAsync(int orderId);
+        Task ClearCartAsync(int userId);
     }
+
 
 }

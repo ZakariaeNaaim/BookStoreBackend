@@ -9,7 +9,9 @@ using Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Application.Services
 {
@@ -35,9 +37,27 @@ namespace Application.Services
             _companyRepository = companyRepository;
         }
 
-        public async Task<IEnumerable<ApplicationUser>> GetAllAsync()
+        public async Task<IEnumerable<UserListDto>> GetAllAsync()
         {
-            return await _readOnlyRepository.GetAllAsync();
+            var users = await _readOnlyRepository.GetAllAsync();
+            var userListDtos = new List<UserListDto>();
+
+            foreach (var user in users)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                userListDtos.Add(new UserListDto
+                {
+                    Id = user.Id,
+                    Name = user.Name,
+                    Email = user.Email,
+                    Phone = user.PhoneNumber,
+                    Company = user.Company?.Name,
+                    Role = roles.FirstOrDefault() ?? "Customer",
+                    IsLocked = user.LockoutEnd.HasValue && user.LockoutEnd > DateTime.Now
+                });
+            }
+
+            return userListDtos;
         }
 
         public async Task<UserPermissionsDto?> GetUserPermissionsAsync(int userId)
@@ -98,5 +118,4 @@ namespace Application.Services
             return true;
         }
     }
-
 }

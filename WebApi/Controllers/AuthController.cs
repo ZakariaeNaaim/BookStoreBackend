@@ -1,7 +1,11 @@
+using Application.Dtos.Common;
+using Application.Dtos.Identity;
+using Application.Interfaces.IServices;
+using Domain.Entities.Common;
 using Domain.Entities.Identity;
 using Infrastructure.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -14,30 +18,45 @@ namespace WebApi.Controllers
         private readonly SignInManager<ApplicationUser> _signInManager;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly JwtTokenService _jwtTokenService;
+        private readonly ICartService _cartService;
         
-        public AuthController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, JwtTokenService jwtTokenService)
+        public AuthController(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, JwtTokenService jwtTokenService, ICartService cartService)
         {
             _signInManager = signInManager;
             _userManager = userManager;
             _jwtTokenService = jwtTokenService;
+            _cartService = cartService;
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginRequestDto request)
         {
             var user = await _userManager.FindByEmailAsync(request.Email);
-            if (user == null) return Unauthorized();
+            if (user == null) return Unauthorized(new { message = "Invalid credentials" });
 
             var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
-            if (!result.Succeeded) return Unauthorized();
+            if (!result.Succeeded) return Unauthorized(new { message = "Invalid credentials" });
 
             var token = await _jwtTokenService.GenerateToken(user);
+            var roles = await _userManager.GetRolesAsync(user);
 
-            return Ok(new { token, user });
+            var response = new AuthResponseDto
+            {
+                Token = token,
+                User = new UserInfoDto
+                {
+                    Id = user.Id.ToString(),
+                    Email = user.Email!,
+                    Name = user.Name,
+                    Role = roles.FirstOrDefault() ?? "Customer"
+                }
+            };
+
+            return Ok(response);
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+        public async Task<ActionResult<AuthResponseDto>> Register([FromBody] RegisterRequestDto request)
         {
             // Check if user already exists
             var existingUser = await _userManager.FindByEmailAsync(request.Email);
@@ -51,20 +70,14 @@ namespace WebApi.Controllers
             {
                 UserName = request.Email,
                 Email = request.Email,
-                //Name = request.Name ?? request.Email,
-                Name = request.Email,
-                //PhoneNumber = request.PhoneNumber,
-                PhoneNumber = "14444",
-                AddressInfo = new Domain.Entities.Common.AddressInfo
+                Name = request.Name,
+                PhoneNumber = request.PhoneNumber,
+                AddressInfo = new AddressInfo
                 {
-                    //StreetAddress = request.StreetAddress,
-                    StreetAddress = "Azhar",
-                    //City = request.City,
-                    City ="Casablanca",
-                    //State = request.State,
-                    State ="Morocoo",
-                    //PostalCode = request.PostalCode
-                    PostalCode = "21255"
+                    StreetAddress = request.AddressInfo?.StreetAddress,
+                    City = request.AddressInfo?.City,
+                    State = request.AddressInfo?.State,
+                    PostalCode = request.AddressInfo?.PostalCode
                 }
             };
 
@@ -72,7 +85,7 @@ namespace WebApi.Controllers
             
             if (!result.Succeeded)
             {
-                return BadRequest(new { message = "Failed to create user", errors = result.Errors });
+                return BadRequest(new { message = "Failed to create user", errors = result.Errors.Select(e => e.Description) });
             }
 
             // Add to Customer role by default
@@ -80,10 +93,36 @@ namespace WebApi.Controllers
 
             // Generate token and sign in
             var token = await _jwtTokenService.GenerateToken(user);
+            var roles = await _userManager.GetRolesAsync(user);
 
-            return Ok(new { token, user });
+            var response = new AuthResponseDto
+            {
+                Token = token,
+                User = new UserInfoDto
+                {
+                    Id = user.Id.ToString(),
+                    Email = user.Email!,
+                    Name = user.Name,
+                    Role = roles.FirstOrDefault() ?? "Customer"
+                }
+            };
+
+            return Ok(response);
         }
 
+
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<ActionResult<SuccessResponseDto>> Logout()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out int userId))
+            {
+                await _cartService.ClearCartAsync(userId);
+            }
+
+            return Ok(new SuccessResponseDto("Logged out successfully"));
+        }
 
         [HttpGet("external-login")]
         public IActionResult ExternalLogin(string provider, string returnUrl = null)
@@ -125,9 +164,20 @@ namespace WebApi.Controllers
             }
 
             var token = await _jwtTokenService.GenerateToken(user);
+            var roles = await _userManager.GetRolesAsync(user);
+            var userRole = roles.FirstOrDefault() ?? "Customer";
+
+            // Encode user info to pass to Angular
+            var userJson = System.Text.Json.JsonSerializer.Serialize(new UserInfoDto
+            {
+                Id = user.Id.ToString(),
+                Email = user.Email!,
+                Name = user.Name,
+                Role = userRole
+            });
 
             // Instead of redirect, return JSON so Angular can consume it
-            return Redirect($"{returnUrl}?token={token}");
+            return Redirect($"{returnUrl}?token={token}&user={System.Web.HttpUtility.UrlEncode(userJson)}");
         }
     }
 }
