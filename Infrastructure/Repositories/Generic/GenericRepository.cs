@@ -37,7 +37,7 @@ namespace Infrastructure.Repositories.Generic
 				query = query.AsNoTracking();
 
 			query = IncludeNavigationProperties(query, includeProperties);
-			return await query.ToListAsync();
+			return await query.ToListAsync().ConfigureAwait(false);
 		}
 
 		// For filtering with IQueryable
@@ -64,14 +64,14 @@ namespace Infrastructure.Repositories.Generic
 			query = query.Where(predicate);  // Apply the filter
 			query = IncludeNavigationProperties(query, includeProperties);  // Include any related entities
 
-			return await query.ToListAsync();
+			return await query.ToListAsync().ConfigureAwait(false);
 		}
 
-		public async Task<T?> GetByIdAsync(int id, string? includeProperties = null, bool tracked = false)
-		{
+        public async Task<T?> GetByIdAsync(int id, string? includeProperties = null, bool tracked = false)
+		{ 
 			if (tracked && string.IsNullOrEmpty(includeProperties))
 			{
-				return await _dbSet.FindAsync(id);
+				return await _dbSet.FindAsync(id).ConfigureAwait(false);
 			}
 
 			IQueryable<T> query = _dbSet;
@@ -80,7 +80,7 @@ namespace Infrastructure.Repositories.Generic
 				query = query.AsNoTracking();
 
 			query = IncludeNavigationProperties(query, includeProperties);
-			return await query.FirstOrDefaultAsync(e => EF.Property<int>(e, "Id") == id);
+			return await query.FirstOrDefaultAsync(e => EF.Property<int>(e, "Id") == id).ConfigureAwait(false);
 		}
 
 		// For retrieving a single entity using a custom predicate
@@ -92,12 +92,12 @@ namespace Infrastructure.Repositories.Generic
 				query = query.AsNoTracking();
 
 			query = IncludeNavigationProperties(query, includeProperties);
-			return await query.FirstOrDefaultAsync(predicate);
+			return await query.FirstOrDefaultAsync(predicate).ConfigureAwait(false);
 		}
 
 		public async Task AddAsync(T entity)
 		{
-			await _dbSet.AddAsync(entity);
+			await _dbSet.AddAsync(entity).ConfigureAwait(false);
 		}
 
 		public void Remove(T entity)
