@@ -1,4 +1,6 @@
-﻿using Application.Dtos.ShoppingCarts;
+﻿using Application.Dtos.Common;
+using Application.Dtos.Orders;
+using Application.Dtos.ShoppingCarts;
 using Application.Interfaces.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -36,13 +38,13 @@ namespace WebApi.Controllers
         [HttpPost("add")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> AddToCart([FromBody] AddToCartDto dto)
+        public async Task<ActionResult<SuccessResponseDto>> AddToCart([FromBody] AddToCartDto dto)
         {
             var userId = GetUserId();
             var success = await _cartService.AddToCartAsync(userId, dto.BookId, dto.Quantity);
 
             if (!success) return BadRequest("Unable to add to cart.");
-            return Ok("Item added successfully.");
+            return Ok(new SuccessResponseDto("Item added to cart"));
         }
 
         [HttpGet("index")]
@@ -58,31 +60,31 @@ namespace WebApi.Controllers
         [HttpPost("increment/{cartId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> IncrementQuantity(int cartId)
+        public async Task<ActionResult<SuccessResponseDto>> IncrementQuantity(int cartId)
         {
             var success = await _cartService.IncrementQuantityAsync(cartId);
             if (!success) return BadRequest("Unable to increment quantity.");
-            return Ok("Quantity incremented successfully.");
+            return Ok(new SuccessResponseDto("Quantity incremented successfully."));
         }
 
         [HttpPost("decrement/{cartId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> DecrementQuantity(int cartId)
+        public async Task<ActionResult<SuccessResponseDto>> DecrementQuantity(int cartId)
         {
             var success = await _cartService.DecrementQuantityAsync(cartId);
             if (!success) return BadRequest("Unable to decrement quantity.");
-            return Ok("Quantity decremented successfully.");
+            return Ok(new SuccessResponseDto("Quantity decremented successfully."));
         }
 
         [HttpDelete("{cartId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> Delete(int cartId)
+        public async Task<ActionResult<SuccessResponseDto>> Delete(int cartId)
         {
             var success = await _cartService.DeleteItemAsync(cartId);
             if (!success) return NotFound("Item not found.");
-            return Ok("Item deleted successfully.");
+            return Ok(new SuccessResponseDto("Item deleted successfully."));
         }
 
         [HttpGet("summary")]
@@ -98,7 +100,7 @@ namespace WebApi.Controllers
         [HttpPost("place-order")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> PlaceOrder()
+        public async Task<ActionResult<PlaceOrderResponseDto>> PlaceOrder()
         {
             var userId = GetUserId();
             var domain = Request.Scheme + "://" + Request.Host.Value + "/";
@@ -106,19 +108,19 @@ namespace WebApi.Controllers
 
             if (!string.IsNullOrEmpty(checkoutUrl))
             {
-                return Ok(new { CheckoutUrl = checkoutUrl });
+                return Ok(new PlaceOrderResponseDto { CheckoutUrl = checkoutUrl });
             }
 
-            return Ok("Order placed successfully.");
+            return Ok(new PlaceOrderResponseDto { Message = "Order placed successfully." });
         }
 
         [HttpGet("order-confirmation/{orderId}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<IActionResult> OrderConfirmation(int orderId)
+        public async Task<ActionResult<OrderConfirmationResponseDto>> OrderConfirmation(int orderId)
         {
             await _cartService.ConfirmOrderAsync(orderId);
-            return Ok(new { OrderId = orderId, Status = "Confirmed" });
+            return Ok(new OrderConfirmationResponseDto { OrderId = orderId, Status = "Confirmed" });
         }
     }
 }

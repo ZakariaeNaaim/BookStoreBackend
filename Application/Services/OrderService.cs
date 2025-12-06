@@ -38,7 +38,9 @@ namespace Application.Services
             if (order == null) return null;
 
             var details = await _orderDetailRepository.FindAllAsync(x => x.OrderId == orderId, includeProperties: "Book");
-            return new OrderDto { Order = order, OrderDetails = details };
+            order.OrderDetails = details.ToList();
+            
+            return new OrderDto { Order = order };
         }
 
         public async Task<IEnumerable<TbOrder>> GetAllAsync(string status, ClaimsPrincipal user)

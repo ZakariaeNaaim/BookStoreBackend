@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Application.Inerfaces.IRepositories;
+using Application.Interfaces.IServices;
 using Domain.Entities.Orders;
 using Domain.Enums;
+using Application.Dtos.Orders;
+using Application.Dtos.Common;
 
 namespace WebApi.Controllers
 {
@@ -12,65 +14,107 @@ namespace WebApi.Controllers
 	[Authorize]
 	public class OrdersController : ControllerBase
 	{
-		private readonly IUnitOfWork _unitOfWork;
+		private readonly IOrderService _orderService;
 
-        public OrdersController(IUnitOfWork unitOfWork)
+        public OrdersController(IOrderService orderService)
         {
-            _unitOfWork = unitOfWork;
+            _orderService = orderService;
         }
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult GetAll(string status = "all")
+        public async Task<IActionResult> GetAll(string status = "all")
 		{
 			try
 			{
-				IQueryable<TbOrder> lstOrders;
-				if (User.IsInRole(UserRole.Admin.ToString()) || User.IsInRole(UserRole.Employee.ToString()))
-				{
-					lstOrders = _unitOfWork.Order.GetAllQueryable(includeProperties: "User");
-				}
-				else
-				{
-					ClaimsIdentity claimsIdentity = (ClaimsIdentity)User.Identity;
-					var userIdClaim = claimsIdentity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-					
-					if (string.IsNullOrEmpty(userIdClaim))
-					{
-						return Unauthorized(new { success = false, message = "User ID not found in token claims" });
-					}
-					
-					int userId = int.Parse(userIdClaim);
-
-					lstOrders = _unitOfWork.Order.FindAllQueryable(x => x.UserId == userId ,includeProperties: "User");
-				}
-
-				switch (status)
-				{
-					case "pending":
-						lstOrders = lstOrders.Where(x => x.PaymentStatus == PaymentStatus.ApprovedForDelayedPayment.ToString());
-						break;
-					case "inProcess":
-						lstOrders = lstOrders.Where(x => x.OrderStatus == OrderStatus.Processing.ToString());
-						break;
-					case "completed":
-						lstOrders = lstOrders.Where(x => x.OrderStatus == OrderStatus.Shipped.ToString());
-						break;
-					case "approved":
-						lstOrders = lstOrders.Where(x => x.OrderStatus == OrderStatus.Approved.ToString());
-						break;
-					default:
-						break;
-				}
-
-				return Ok(lstOrders);
+				var orders = await _orderService.GetAllAsync(status, User);
+				return Ok(orders);
 			}
 			catch (Exception ex)
 			{
 				// Log the exception details (optional)
 				return StatusCode(500, new { success = false, message = "An error occurred while retrieving orders." });
 			}
+		}
+
+		[HttpGet("{id:int}")]
+		[ProducesResponseType(StatusCodes.Status200OK)]
+		[ProducesResponseType(StatusCodes.Status404NotFound)]
+		public async Task<IActionResult> Get(int id)
+		{
+			var orderDto = await _orderService.GetDetailsAsync(id);
+			if (orderDto == null)
+			{
+				return NotFound(new { success = false, message = "Order not found." });
+			}
+			return Ok(orderDto);
+		}
+
+		[HttpPut("UpdateOrderDetails")]
+		[Authorize(Roles = "Admin,Employee")]
+		[ProducesResponseType(StatusCodes.Status200OK)]
+		[ProducesResponseType(StatusCodes.Status400BadRequest)]
+		public async Task<IActionResult> UpdateOrderDetails([FromBody] OrderDto orderDto)
+		{
+			var result = await _orderService.UpdateOrderDetailsAsync(orderDto);
+			if (!result)
+			{
+				return BadRequest(new { success = false, message = "Failed to update order details." });
+			}
+			return Ok(new SuccessResponseDto("Order details updated successfully!"));
+		}
+
+		[HttpPost("StartProcessing")]
+		[Authorize(Roles = "Admin,Employee")]
+		[ProducesResponseType(StatusCodes.Status200OK)]
+		[ProducesResponseType(StatusCodes.Status400BadRequest)]
+		public async Task<IActionResult> StartProcessing([FromBody] Dictionary<string, int> payload)
+		{
+			if (!payload.ContainsKey("id"))
+			{
+				return BadRequest(new { success = false, message = "Order ID is required." });
+			}
+
+			var result = await _orderService.StartProcessingAsync(payload["id"]);
+			if (!result)
+			{
+				return BadRequest(new { success = false, message = "Failed to start processing order." });
+			}
+			return Ok(new SuccessResponseDto("Order status updated successfully!"));
+		}
+
+		[HttpPost("ShipOrder")]
+		[Authorize(Roles = "Admin,Employee")]
+		[ProducesResponseType(StatusCodes.Status200OK)]
+		[ProducesResponseType(StatusCodes.Status400BadRequest)]
+		public async Task<IActionResult> ShipOrder([FromBody] OrderDto orderDto)
+		{
+			var result = await _orderService.ShipOrderAsync(orderDto);
+			if (!result)
+			{
+				return BadRequest(new { success = false, message = "Failed to ship order." });
+			}
+			return Ok(new SuccessResponseDto("Order shipped successfully!"));
+		}
+
+		[HttpPost("CancelOrder")]
+		[Authorize(Roles = "Admin,Employee")]
+		[ProducesResponseType(StatusCodes.Status200OK)]
+		[ProducesResponseType(StatusCodes.Status400BadRequest)]
+		public async Task<IActionResult> CancelOrder([FromBody] Dictionary<string, int> payload)
+		{
+			if (!payload.ContainsKey("id"))
+			{
+				return BadRequest(new { success = false, message = "Order ID is required." });
+			}
+
+			var result = await _orderService.CancelOrderAsync(payload["id"]);
+			if (!result)
+			{
+				return BadRequest(new { success = false, message = "Failed to cancel order." });
+			}
+			return Ok(new SuccessResponseDto("Order canceled successfully!"));
 		}
 	}
 }
