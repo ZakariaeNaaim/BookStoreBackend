@@ -15,10 +15,6 @@ namespace Infrastructure.Repositories.Books
             _context = context;
         }
 
-        public async Task<TbBook?> GetByIdAsync(int id)
-        {
-            return await _context.Books.FindAsync(id);
-        }
 
         public void Update(TbBook entity)
         {

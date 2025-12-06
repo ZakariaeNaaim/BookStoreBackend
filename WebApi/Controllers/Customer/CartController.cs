@@ -62,8 +62,7 @@ namespace WebApi.Controllers.Customer
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<SuccessResponseDto>> IncrementQuantity(int cartId)
         {
-            var success = await _cartService.IncrementQuantityAsync(cartId);
-            if (!success) return BadRequest("Unable to increment quantity.");
+            await _cartService.IncrementQuantityAsync(cartId);
             return Ok(new SuccessResponseDto("Quantity incremented successfully."));
         }
 
@@ -72,8 +71,7 @@ namespace WebApi.Controllers.Customer
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<SuccessResponseDto>> DecrementQuantity(int cartId)
         {
-            var success = await _cartService.DecrementQuantityAsync(cartId);
-            if (!success) return BadRequest("Unable to decrement quantity.");
+            await _cartService.DecrementQuantityAsync(cartId);
             return Ok(new SuccessResponseDto("Quantity decremented successfully."));
         }
 
@@ -82,8 +80,7 @@ namespace WebApi.Controllers.Customer
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<SuccessResponseDto>> Delete(int cartId)
         {
-            var success = await _cartService.DeleteItemAsync(cartId);
-            if (!success) return NotFound("Item not found.");
+            await _cartService.DeleteItemAsync(cartId);
             return Ok(new SuccessResponseDto("Item deleted successfully."));
         }
 

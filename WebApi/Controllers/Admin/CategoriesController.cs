@@ -34,9 +34,6 @@ namespace WebApi.Controllers.Admin
         public async Task<IActionResult> GetById(int id)
         {
             var category = await _categoryService.GetByIdAsync(id);
-            if (category == null)
-                return NotFound(new { success = false, message = $"No category found with Id = ({id})" });
-
             return Ok(category);
         }
 
@@ -54,10 +51,7 @@ namespace WebApi.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Update(int id, [FromBody] CategoryDto categoryViewModel)
         {
-            var result = await _categoryService.UpdateAsync(id, categoryViewModel);
-            if (!result)
-                return NotFound(new { success = false, message = $"No category found with Id = ({id})" });
-
+            await _categoryService.UpdateAsync(id, categoryViewModel);
             return Ok(new { success = true, message = "Category updated successfully!" });
         }
 
@@ -66,10 +60,7 @@ namespace WebApi.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _categoryService.DeleteAsync(id);
-            if (!result)
-                return NotFound(new { success = false, message = $"No category found with Id = ({id})" });
-
+            await _categoryService.DeleteAsync(id);
             return Ok(new { success = true, message = "Category deleted successfully!" });
         }
     }

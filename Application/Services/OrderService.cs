@@ -10,6 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Text;
+using Application.Exceptions;
 
 namespace Application.Services
 {
@@ -35,7 +36,8 @@ namespace Application.Services
         public async Task<OrderDto?> GetDetailsAsync(int orderId)
         {
             var order = await _orderRepository.GetByIdAsync(orderId, includeProperties: "User");
-            if (order == null) return null;
+             if (order == null)
+                throw new NotFoundException($"Order with ID {orderId} not found.");
 
             var details = await _orderDetailRepository.FindAllAsync(x => x.OrderId == orderId, includeProperties: "Book");
             order.OrderDetails = details.ToList();
@@ -70,10 +72,11 @@ namespace Application.Services
         public async Task<bool> UpdateOrderDetailsAsync(OrderDto orderViewModel)
         {
             var order = await _orderRepository.GetByIdAsync(orderViewModel.Order.Id);
-            if (order == null) return false;
+             if (order == null)
+                throw new NotFoundException($"Order with ID {orderViewModel.Order.Id} not found.");
 
-            OrderMapper.Map(orderViewModel, order);
-            _orderRepository.Update(order);
+            OrderMapper.Map(orderViewModel, order!);
+            _orderRepository.Update(order!);
             await _unitOfWork.SaveAsync();
             return true;
         }
@@ -88,9 +91,10 @@ namespace Application.Services
         public async Task<bool> ShipOrderAsync(OrderDto orderViewModel)
         {
             var order = await _orderRepository.GetByIdAsync(orderViewModel.Order.Id);
-            if (order == null) return false;
+             if (order == null)
+                throw new NotFoundException($"Order with ID {orderViewModel.Order.Id} not found.");
 
-            order.TrackingNumber = orderViewModel.Order.TrackingNumber;
+            order!.TrackingNumber = orderViewModel.Order.TrackingNumber;
             order.Carrier = orderViewModel.Order.Carrier;
             order.OrderStatus = OrderStatus.Shipped.ToString();
             order.ShippingDate = DateTime.Now;
@@ -106,9 +110,10 @@ namespace Application.Services
         public async Task<bool> CancelOrderAsync(int orderId)
         {
             var order = await _orderRepository.GetByIdAsync(orderId);
-            if (order == null) return false;
+             if (order == null)
+                throw new NotFoundException($"Order with ID {orderId} not found.");
 
-            if (order.PaymentStatus == PaymentStatus.Approved.ToString())
+            if (order!.PaymentStatus == PaymentStatus.Approved.ToString())
             {
                 await _paymentService.RefundAsync(order.PaymentIntentId);
                 _orderRepository.UpdateStatus(order.Id, OrderStatus.Canceled.ToString(), OrderStatus.Refunded.ToString());
@@ -125,18 +130,20 @@ namespace Application.Services
         public async Task<Session?> CreatePaymentSessionAsync(int orderId, string? domain)
         {
             var order = await _orderRepository.GetByIdAsync(orderId, includeProperties: "User");
-            if (order == null) return null;
+             if (order == null)
+                throw new NotFoundException($"Order with ID {orderId} not found.");
 
             var details = await _orderDetailRepository.FindAllAsync(x => x.OrderId == orderId, includeProperties: "Book");
-            return await _paymentService.CreateCheckoutSessionAsync(order, details,domain);
+            return await _paymentService.CreateCheckoutSessionAsync(order!, details,domain);
         }
 
         public async Task<bool> ConfirmPaymentAsync(int orderId)
         {
             var order = await _orderRepository.GetByIdAsync(orderId);
-            if (order == null) return false;
+             if (order == null)
+                throw new NotFoundException($"Order with ID {orderId} not found.");
 
-            if (order.PaymentStatus == PaymentStatus.ApprovedForDelayedPayment.ToString())
+            if (order!.PaymentStatus == PaymentStatus.ApprovedForDelayedPayment.ToString())
             {
                 var paid = await _paymentService.VerifyPaymentAsync(order.SessionId);
                 if (paid)

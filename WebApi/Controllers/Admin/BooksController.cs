@@ -38,7 +38,6 @@ namespace WebApi.Controllers.Admin
         public async Task<ActionResult<TbBook>> Get(int id)
         {
             var book = await _bookService.GetByIdAsync(id);
-            if (book == null) return NotFound();
             return Ok(book);
         }
 
@@ -50,9 +49,7 @@ namespace WebApi.Controllers.Admin
             if (id <= 0)
                 return BadRequest(new { success = false, message = $"({id}) is an invalid Id" });
 
-            var result = await _bookService.DeleteAsync(id);
-            if (!result)
-                return NotFound(new { success = false, message = $"No book found with Id = ({id})" });
+            await _bookService.DeleteAsync(id);
 
             return Ok(new SuccessResponseDto("Book deleted successfully!"));
         }

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using Application.Exceptions;
 
 namespace WebApi.Controllers.Auth
 {
@@ -32,10 +33,10 @@ namespace WebApi.Controllers.Auth
         public async Task<ActionResult<AuthResponseDto>> Login([FromBody] LoginRequestDto request)
         {
             var user = await _userManager.FindByEmailAsync(request.Email);
-            if (user == null) return Unauthorized(new { message = "Invalid credentials" });
+            if (user == null) throw new UnauthorizedException("Invalid credentials");
 
             var result = await _signInManager.CheckPasswordSignInAsync(user, request.Password, false);
-            if (!result.Succeeded) return Unauthorized(new { message = "Invalid credentials" });
+            if (!result.Succeeded) throw new UnauthorizedException("Invalid credentials");
 
             var token = await _jwtTokenService.GenerateToken(user);
             var roles = await _userManager.GetRolesAsync(user);
@@ -62,7 +63,7 @@ namespace WebApi.Controllers.Auth
             var existingUser = await _userManager.FindByEmailAsync(request.Email);
             if (existingUser != null)
             {
-                return BadRequest(new { message = "User with this email already exists" });
+                throw new ValidationException("User with this email already exists");
             }
 
             // Create new user
@@ -85,7 +86,7 @@ namespace WebApi.Controllers.Auth
             
             if (!result.Succeeded)
             {
-                return BadRequest(new { message = "Failed to create user", errors = result.Errors.Select(e => e.Description) });
+                throw new ValidationException(result.Errors.Select(e => e.Description));
             }
 
             // Add to Customer role by default
@@ -135,13 +136,13 @@ namespace WebApi.Controllers.Auth
         [HttpGet("external-auth-callback")]
         public async Task<IActionResult> ExternalLoginCallback(string returnUrl = null, string remoteError = null)
         {
-            returnUrl = returnUrl ?? "http://localhost:4200/login";
+            var redirectUrl = returnUrl ?? "http://localhost:4200/login";
             if (remoteError != null)
-                return BadRequest(new { message = $"Error from external provider: {remoteError}" });
+                throw new ApiException($"Error from external provider: {remoteError}");
 
             var info = await _signInManager.GetExternalLoginInfoAsync();
             if (info == null)
-                return BadRequest(new { message = "Error loading external login information." });
+                throw new ApiException("Error loading external login information.");
 
             var result = await _signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, false);
             ApplicationUser user;

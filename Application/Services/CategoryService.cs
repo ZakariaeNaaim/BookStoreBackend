@@ -1,4 +1,5 @@
 ﻿using Application.Dtos.Books;
+using Application.Exceptions;
 using Application.Inerfaces.IRepositories;
 using Application.Inerfaces.IRepositories.IBooks;
 using Application.Interfaces.IServices;
@@ -34,7 +35,8 @@ namespace Application.Services
         public async Task<CategoryDto?> GetByIdAsync(int id)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
-            if (category == null) return null;
+             if (category == null)
+                throw new NotFoundException($"Category with ID {id} not found.");
 
             return new CategoryDto
             {
@@ -60,12 +62,13 @@ namespace Application.Services
         public async Task<bool> UpdateAsync(int id, CategoryDto categoryViewModel)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
-            if (category == null) return false;
+             if (category == null)
+                throw new NotFoundException($"Category with ID {id} not found.");
 
             category.Name = categoryViewModel.Name;
             category.DisplayOrder = categoryViewModel.DisplayOrder;
 
-            _categoryRepository.Update(category);
+            _categoryRepository.Update(category!);
             await _unitOfWork.SaveAsync();
             return true;
         }
@@ -73,9 +76,10 @@ namespace Application.Services
         public async Task<bool> DeleteAsync(int id)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
-            if (category == null) return false;
+             if (category == null)
+                throw new NotFoundException($"Category with ID {id} not found.");
 
-            _categoryRepository.Remove(category);
+            _categoryRepository.Remove(category!);
             await _unitOfWork.SaveAsync();
             return true;
         }

@@ -11,6 +11,7 @@ using Stripe.Checkout;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Application.Exceptions;
 
 namespace Application.Services
 {
@@ -87,9 +88,10 @@ namespace Application.Services
         public async Task<bool> IncrementQuantityAsync(int cartId)
         {
             var cart = await _unitOfWork.ShoppingCart.GetAsync(x => x.Id == cartId);
-            if (cart == null) return false;
+             if (cart == null)
+                throw new NotFoundException($"Cart item with ID {cartId} not found.");
 
-            cart.Quantity++;
+            cart!.Quantity++;
             _unitOfWork.ShoppingCart.Update(cart);
             await _unitOfWork.SaveAsync();
             return true;
@@ -98,9 +100,10 @@ namespace Application.Services
         public async Task<bool> DecrementQuantityAsync(int cartId)
         {
             var cart = await _unitOfWork.ShoppingCart.GetAsync(x => x.Id == cartId);
-            if (cart == null) return false;
+             if (cart == null)
+                throw new NotFoundException($"Cart item with ID {cartId} not found.");
 
-            if (cart.Quantity <= 1)
+            if (cart!.Quantity <= 1)
             {
                 _unitOfWork.ShoppingCart.Remove(cart);
             }
@@ -117,9 +120,10 @@ namespace Application.Services
         public async Task<bool> DeleteItemAsync(int cartId)
         {
             var cart = await _unitOfWork.ShoppingCart.GetAsync(x => x.Id == cartId);
-            if (cart == null) return false;
+             if (cart == null)
+                throw new NotFoundException($"Cart item with ID {cartId} not found.");
 
-            _unitOfWork.ShoppingCart.Remove(cart);
+            _unitOfWork.ShoppingCart.Remove(cart!);
             await _unitOfWork.SaveAsync();
             return true;
         }
@@ -130,9 +134,9 @@ namespace Application.Services
             var user = await _unitOfWork.ApplicationUser.GetByIdAsync(userId);
 
             if(user == null)
-                throw new Exception("User not found");
+                throw new NotFoundException($"User with ID {userId} not found.");
 
-            AddressInfo adressInfo = user.AddressInfo;
+            AddressInfo adressInfo = user!.AddressInfo;
             var order = new TbOrder
             {
                 UserId = userId,

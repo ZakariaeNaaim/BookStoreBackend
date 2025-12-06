@@ -1,4 +1,5 @@
 ﻿using Application.Dtos.Companies;
+using Application.Exceptions;
 using Application.Inerfaces.IRepositories;
 using Application.Inerfaces.IRepositories.ICompanies;
 using Application.Interfaces.IServices;
@@ -30,7 +31,9 @@ namespace Application.Services
         public async Task<CompanyDto?> GetByIdAsync(int id)
         {
             var company = await _companyRepository.GetByIdAsync(id);
-            return company == null ? null : CompanyMapper.ToViewModel(company);
+            if (company == null)
+                 throw new NotFoundException($"Company with ID {id} not found.");
+            return CompanyMapper.ToViewModel(company);
         }
 
         public async Task<int> CreateAsync(CompanyDto companyViewModel)
@@ -44,10 +47,11 @@ namespace Application.Services
         public async Task<bool> UpdateAsync(int id, CompanyDto companyViewModel)
         {
             var company = await _companyRepository.GetByIdAsync(id);
-            if (company == null) return false;
+             if (company == null)
+                throw new NotFoundException($"Company with ID {id} not found.");
 
-            CompanyMapper.UpdateEntity(company, companyViewModel);
-            _companyRepository.Update(company);
+            CompanyMapper.UpdateEntity(company!, companyViewModel);
+            _companyRepository.Update(company!);
             await _unitOfWork.SaveAsync();
             return true;
         }
@@ -55,9 +59,10 @@ namespace Application.Services
         public async Task<bool> DeleteAsync(int id)
         {
             var company = await _companyRepository.GetByIdAsync(id);
-            if (company == null) return false;
+             if (company == null)
+                throw new NotFoundException($"Company with ID {id} not found.");
 
-            _companyRepository.Remove(company);
+            _companyRepository.Remove(company!);
             await _unitOfWork.SaveAsync();
             return true;
         }

@@ -47,11 +47,7 @@ namespace WebApi.Controllers.Customer
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<BookDetailsDto>> Details(int bookId)
         {
-            if (bookId <= 0) return BadRequest("Invalid book id.");
-
             var vm = await _homeService.GetBookDetailsAsync(bookId);
-            if (vm == null) return NotFound("Book not found.");
-
             return Ok(vm);
         }
 

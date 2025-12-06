@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Application.Dtos.Books;
 using Application.Dtos.ShoppingCarts;
+using Application.Exceptions;
 
 namespace Application.Services
 {
@@ -32,10 +33,11 @@ namespace Application.Services
         public async Task<BookDetailsDto?> GetBookDetailsAsync(int bookId)
         {
             var bookModel = await _unitOfWork.Book.GetByIdAsync(bookId, "Category,BookImages");
-            if (bookModel == null) return null;
+             if (bookModel == null)
+                throw new NotFoundException($"Book with ID {bookId} not found.");
 
             var vm = new BookDetailsDto();
-            CartMapper.MapBookToDetails(bookModel, vm);
+            CartMapper.MapBookToDetails(bookModel!, vm);
             vm.Quantity = 1; // default
             return vm;
         }

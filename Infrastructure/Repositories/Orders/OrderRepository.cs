@@ -1,5 +1,4 @@
-﻿
-using Application.Inerfaces.IRepositories.IOrders;
+﻿using Application.Inerfaces.IRepositories.IOrders;
 using Domain.Entities.Orders;
 using Infrastructure.Data;
 using Infrastructure.Repositories.Generic;
@@ -15,19 +14,6 @@ namespace Infrastructure.Repositories.Orders
         public OrderRepository(AppDbContext context) : base(context)
         {
             _context = context;
-        }
-
-        public async Task<TbOrder?> GetByIdAsync(int id, string? includeProperties = null)
-        {
-            IQueryable<TbOrder> query = _context.Orders;
-            if (!string.IsNullOrEmpty(includeProperties))
-            {
-                foreach (var includeProp in includeProperties.Split(',', StringSplitOptions.RemoveEmptyEntries))
-                {
-                    query = query.Include(includeProp);
-                }
-            }
-            return await query.FirstOrDefaultAsync(o => o.Id == id);
         }
 
         public IQueryable<TbOrder> GetAllQueryable(string? includeProperties = null)

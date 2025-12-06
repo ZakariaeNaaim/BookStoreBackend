@@ -69,6 +69,11 @@ namespace Infrastructure.Repositories.Generic
 
 		public async Task<T?> GetByIdAsync(int id, string? includeProperties = null, bool tracked = false)
 		{
+			if (tracked && string.IsNullOrEmpty(includeProperties))
+			{
+				return await _dbSet.FindAsync(id);
+			}
+
 			IQueryable<T> query = _dbSet;
 
 			if (!tracked)

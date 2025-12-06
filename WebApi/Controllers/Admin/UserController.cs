@@ -50,9 +50,6 @@ namespace WebApi.Controllers.Admin
         public async Task<IActionResult> GetPermissions(int id)
         {
             var userPermissions = await _userService.GetUserPermissionsAsync(id);
-            if (userPermissions == null)
-                return NotFound(new { success = false, message = $"No user found with Id = {id}" });
-
             return Ok(userPermissions);
         }
 
@@ -61,10 +58,7 @@ namespace WebApi.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<SuccessResponseDto>> ChangePermission([FromBody] UserPermissionsDto viewModel)
         {
-            var result = await _userService.ChangePermissionAsync(viewModel);
-            if (!result)
-                return BadRequest(new { success = false, message = "Failed to change user role/permissions." });
-
+            await _userService.ChangePermissionAsync(viewModel);
             return Ok(new SuccessResponseDto("User role changed successfully!"));
         }
 
@@ -73,10 +67,7 @@ namespace WebApi.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<SuccessResponseDto>> LockUnlock(int id)
         {
-            var result = await _userService.LockUnlockAsync(id);
-            if (!result)
-                return BadRequest(new { success = false, message = "Failed to lock/unlock user." });
-
+            await _userService.LockUnlockAsync(id);
             return Ok(new SuccessResponseDto("User lock/unlock updated successfully!"));
         }
     }

@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Application.Exceptions;
 
 namespace Application.Services
 {
@@ -63,7 +64,8 @@ namespace Application.Services
         public async Task<UserPermissionsDto?> GetUserPermissionsAsync(int userId)
         {
             var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null) return null;
+             if (user == null)
+                throw new NotFoundException($"User with ID {userId} not found.");
 
             var roles = await _userManager.GetRolesAsync(user);
 
@@ -83,20 +85,21 @@ namespace Application.Services
         public async Task<bool> ChangePermissionAsync(UserPermissionsDto viewModel)
         {
             var user = await _userRepository.GetByIdAsync(viewModel.Id);
-            if (user == null) return false;
+             if (user == null)
+                throw new NotFoundException($"User with ID {viewModel.Id} not found.");
 
-            var currentRole = (await _userManager.GetRolesAsync(user)).FirstOrDefault();
+            var currentRole = (await _userManager.GetRolesAsync(user!)).FirstOrDefault();
             if (currentRole == null) return false;
 
-            var removeResult = await _userManager.RemoveFromRoleAsync(user, currentRole);
+            var removeResult = await _userManager.RemoveFromRoleAsync(user!, currentRole);
             if (!removeResult.Succeeded) return false;
 
             if (!await _roleManager.RoleExistsAsync(viewModel.Role)) return false;
 
-            var addResult = await _userManager.AddToRoleAsync(user, viewModel.Role);
+            var addResult = await _userManager.AddToRoleAsync(user!, viewModel.Role);
             if (!addResult.Succeeded) return false;
 
-            user.CompanyId = viewModel.Role == UserRole.Company.ToString() ? viewModel.CompanyId : null;
+            user!.CompanyId = viewModel.Role == UserRole.Company.ToString() ? viewModel.CompanyId : null;
             await _userRepository.SaveChangesAsync();
 
             return true;
@@ -105,9 +108,10 @@ namespace Application.Services
         public async Task<bool> LockUnlockAsync(int userId)
         {
             var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null) return false;
+             if (user == null)
+                throw new NotFoundException($"User with ID {userId} not found.");
 
-            if (!user.LockoutEnabled) return false; // main admin cannot be locked
+            if (!user!.LockoutEnabled) return false; // main admin cannot be locked
 
             if (user.LockoutEnd > DateTime.Now)
                 user.LockoutEnd = DateTime.Now; // unlock
