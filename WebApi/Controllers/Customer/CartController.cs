@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.Threading.Tasks;
 
-namespace WebApi.Controllers
+namespace WebApi.Controllers.Customer
 {
     [Route("api/[area]/[controller]")]
     [ApiController]

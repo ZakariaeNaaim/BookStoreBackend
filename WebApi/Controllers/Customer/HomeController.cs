@@ -6,7 +6,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Application.Dtos.Books;
 
-namespace WebApi.Controllers
+namespace WebApi.Controllers.Customer
 {
     [Route("api/[area]/[controller]")]
     [ApiController]
