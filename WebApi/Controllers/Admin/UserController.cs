@@ -9,9 +9,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
-namespace WebApi.Controllers
+namespace WebApi.Controllers.Admin
 {
-    [Route("api/admin/[controller]")]
+    [Route("api/[area]/[controller]")]
     [Area(nameof(UserRole.Admin))]
     [Authorize(Roles = nameof(UserRole.Admin))]
     public class UsersController : ControllerBase
