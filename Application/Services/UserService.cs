@@ -121,5 +121,13 @@ namespace Application.Services
             await _userRepository.SaveChangesAsync();
             return true;
         }
+
+        public async Task<IEnumerable<RoleDto>> GetRolesAsync()
+        {
+            var roles = _roleManager.Roles
+                .Select(r => new RoleDto { Text = r.Name!, Value = r.Name! })
+                .ToList();
+            return await Task.FromResult(roles);
+        }
     }
 }

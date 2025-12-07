@@ -2,7 +2,6 @@ using Application.Interfaces.IServices;
 using Application.Dtos.ShoppingCarts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using System.Threading.Tasks;
 using Application.Dtos.Books;
 
@@ -14,23 +13,12 @@ namespace WebApi.Controllers.Customer
     public class HomeController : ControllerBase
     {
         private readonly IHomeService _homeService;
+        private readonly IUserContextService _userContextService;
 
-        public HomeController(IHomeService homeService)
+        public HomeController(IHomeService homeService, IUserContextService userContextService)
         {
             _homeService = homeService;
-        }
-
-        private int GetUserId()
-        {
-            var claimsIdentity = (ClaimsIdentity)User.Identity;
-            var userIdClaim = claimsIdentity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            
-            if (string.IsNullOrEmpty(userIdClaim))
-            {
-                throw new UnauthorizedAccessException("User ID not found in token claims");
-            }
-            
-            return int.Parse(userIdClaim);
+            _userContextService = userContextService;
         }
 
         [HttpGet("index")]
@@ -60,8 +48,11 @@ namespace WebApi.Controllers.Customer
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var userId = GetUserId();
-            var success = await _homeService.AddToCartAsync(userId, viewModel);
+            var userId = _userContextService.GetUserId();
+            if (!userId.HasValue)
+                return Unauthorized("User ID not found in token claims");
+
+            var success = await _homeService.AddToCartAsync(userId.Value, viewModel);
 
             if (!success)
                 return StatusCode(500, "An error occurred while adding the item.");

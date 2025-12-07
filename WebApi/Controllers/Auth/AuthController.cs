@@ -3,8 +3,6 @@ using Application.Dtos.Identity;
 using Application.Interfaces.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using Application.Exceptions;
 using Microsoft.AspNetCore.Identity;
 
 namespace WebApi.Controllers.Auth
@@ -14,12 +12,17 @@ namespace WebApi.Controllers.Auth
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
-        private readonly SignInManager<Domain.Entities.Identity.ApplicationUser> _signInManager; 
+        private readonly SignInManager<Domain.Entities.Identity.ApplicationUser> _signInManager;
+        private readonly IUserContextService _userContextService;
 
-        public AuthController(IAuthService authService, SignInManager<Domain.Entities.Identity.ApplicationUser> signInManager)
+        public AuthController(
+            IAuthService authService, 
+            SignInManager<Domain.Entities.Identity.ApplicationUser> signInManager,
+            IUserContextService userContextService)
         {
             _authService = authService;
             _signInManager = signInManager;
+            _userContextService = userContextService;
         }
 
         [HttpPost("login")]
@@ -40,8 +43,8 @@ namespace WebApi.Controllers.Auth
         [Authorize]
         public async Task<ActionResult<SuccessResponseDto>> Logout()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            await _authService.Logout(userIdClaim);
+            var userId = _userContextService.GetUserId();
+            await _authService.Logout(userId?.ToString());
             return Ok(new SuccessResponseDto("Logged out successfully"));
         }
 

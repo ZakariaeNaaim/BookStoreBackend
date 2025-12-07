@@ -8,7 +8,6 @@ using Domain.Enums;
 using Stripe.Checkout;
 using System;
 using System.Collections.Generic;
-using System.Security.Claims;
 using System.Text;
 using Application.Exceptions;
 
@@ -20,17 +19,20 @@ namespace Application.Services
         private readonly IOrderDetailRepository _orderDetailRepository;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IPaymentService _paymentService;
+        private readonly IUserContextService _userContextService;
 
         public OrderService(
             IOrderRepository orderRepository,
             IOrderDetailRepository orderDetailRepository,
             IUnitOfWork unitOfWork,
-            IPaymentService paymentService)
+            IPaymentService paymentService,
+            IUserContextService userContextService)
         {
             _orderRepository = orderRepository;
             _orderDetailRepository = orderDetailRepository;
             _unitOfWork = unitOfWork;
             _paymentService = paymentService;
+            _userContextService = userContextService;
         }
 
         public async Task<OrderDto?> GetDetailsAsync(int orderId)
@@ -45,28 +47,31 @@ namespace Application.Services
             return new OrderDto { Order = order };
         }
 
-        public async Task<IEnumerable<TbOrder>> GetAllAsync(string status, ClaimsPrincipal user)
+        public async Task<IEnumerable<TbOrder>> GetAllAsync(string status)
         {
             IQueryable<TbOrder> orders;
-            if (user.IsInRole(UserRole.Admin.ToString()) || user.IsInRole(UserRole.Employee.ToString()))
+            if (_userContextService.IsInRole(UserRole.Admin.ToString()) || _userContextService.IsInRole(UserRole.Employee.ToString()))
             {
                 orders = _orderRepository.GetAllQueryable(includeProperties: "User");
             }
             else
             {
-                var claimsIdentity = (ClaimsIdentity)user.Identity!;
-                int userId = int.Parse(claimsIdentity.FindFirst(ClaimTypes.NameIdentifier)!.Value);
-                orders = _orderRepository.FindAllQueryable(x => x.UserId == userId, includeProperties: "User");
+                var userId = _userContextService.GetUserId();
+                if (!userId.HasValue)
+                {
+                    throw new UnauthorizedException("User ID not found in token claims");
+                }
+                orders = _orderRepository.FindAllQueryable(x => x.UserId == userId.Value, includeProperties: "User");
             }
 
-            return status switch
+            return await Task.FromResult(status switch
             {
                 "pending" => orders.Where(x => x.PaymentStatus == PaymentStatus.ApprovedForDelayedPayment.ToString()),
                 "inProcess" => orders.Where(x => x.OrderStatus == OrderStatus.Processing.ToString()),
                 "completed" => orders.Where(x => x.OrderStatus == OrderStatus.Shipped.ToString()),
                 "approved" => orders.Where(x => x.OrderStatus == OrderStatus.Approved.ToString()),
                 _ => orders
-            };
+            });
         }
 
         public async Task<bool> UpdateOrderDetailsAsync(OrderDto orderViewModel)

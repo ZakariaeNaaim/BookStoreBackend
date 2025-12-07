@@ -2,12 +2,8 @@
 using Application.Dtos.Identity;
 using Application.Interfaces.IServices;
 using Domain.Enums;
-using Domain.Entities.Identity;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 
 namespace WebApi.Controllers.Admin
 {
@@ -17,12 +13,10 @@ namespace WebApi.Controllers.Admin
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
-        private readonly RoleManager<ApplicationRole> _roleManager;
 
-        public UsersController(IUserService userService, RoleManager<ApplicationRole> roleManager)
+        public UsersController(IUserService userService)
         {
             _userService = userService;
-            _roleManager = roleManager;
         }
 
         [HttpGet]
@@ -36,11 +30,9 @@ namespace WebApi.Controllers.Admin
 
         [HttpGet("roles")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<List<RoleDto>> GetRoles()
+        public async Task<ActionResult<List<RoleDto>>> GetRoles()
         {
-            var roles = _roleManager.Roles
-                .Select(r => new RoleDto { Text = r.Name!, Value = r.Name! })
-                .ToList();
+            var roles = await _userService.GetRolesAsync();
             return Ok(roles);
         }
 

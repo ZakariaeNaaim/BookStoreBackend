@@ -13,5 +13,6 @@ namespace Application.Interfaces.IServices
         Task<UserPermissionsDto?> GetUserPermissionsAsync(int userId);
         Task<bool> ChangePermissionAsync(UserPermissionsDto viewModel);
         Task<bool> LockUnlockAsync(int userId);
+        Task<IEnumerable<RoleDto>> GetRolesAsync();
     }
 }

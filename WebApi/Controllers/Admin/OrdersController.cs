@@ -27,7 +27,7 @@ namespace WebApi.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetAll(string status = "all")
 		{
-			var orders = await _orderService.GetAllAsync(status, User);
+			var orders = await _orderService.GetAllAsync(status);
 			return Ok(orders);
 		}
 
