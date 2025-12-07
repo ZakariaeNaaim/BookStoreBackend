@@ -27,16 +27,8 @@ namespace WebApi.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetAll(string status = "all")
 		{
-			try
-			{
-				var orders = await _orderService.GetAllAsync(status, User);
-				return Ok(orders);
-			}
-			catch (Exception ex)
-			{
-				// Log the exception details (optional)
-				return StatusCode(500, new { success = false, message = "An error occurred while retrieving orders." });
-			}
+			var orders = await _orderService.GetAllAsync(status);
+			return Ok(orders);
 		}
 
 		[HttpGet("{id:int}")]
@@ -45,10 +37,6 @@ namespace WebApi.Controllers.Admin
 		public async Task<IActionResult> Get(int id)
 		{
 			var orderDto = await _orderService.GetDetailsAsync(id);
-			if (orderDto == null)
-			{
-				return NotFound(new { success = false, message = "Order not found." });
-			}
 			return Ok(orderDto);
 		}
 
@@ -58,11 +46,7 @@ namespace WebApi.Controllers.Admin
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		public async Task<IActionResult> UpdateOrderDetails([FromBody] OrderDto orderDto)
 		{
-			var result = await _orderService.UpdateOrderDetailsAsync(orderDto);
-			if (!result)
-			{
-				return BadRequest(new { success = false, message = "Failed to update order details." });
-			}
+			await _orderService.UpdateOrderDetailsAsync(orderDto);
 			return Ok(new SuccessResponseDto("Order details updated successfully!"));
 		}
 
@@ -77,11 +61,7 @@ namespace WebApi.Controllers.Admin
 				return BadRequest(new { success = false, message = "Order ID is required." });
 			}
 
-			var result = await _orderService.StartProcessingAsync(payload["id"]);
-			if (!result)
-			{
-				return BadRequest(new { success = false, message = "Failed to start processing order." });
-			}
+			await _orderService.StartProcessingAsync(payload["id"]);
 			return Ok(new SuccessResponseDto("Order status updated successfully!"));
 		}
 
@@ -91,11 +71,7 @@ namespace WebApi.Controllers.Admin
 		[ProducesResponseType(StatusCodes.Status400BadRequest)]
 		public async Task<IActionResult> ShipOrder([FromBody] OrderDto orderDto)
 		{
-			var result = await _orderService.ShipOrderAsync(orderDto);
-			if (!result)
-			{
-				return BadRequest(new { success = false, message = "Failed to ship order." });
-			}
+			await _orderService.ShipOrderAsync(orderDto);
 			return Ok(new SuccessResponseDto("Order shipped successfully!"));
 		}
 
@@ -110,11 +86,7 @@ namespace WebApi.Controllers.Admin
 				return BadRequest(new { success = false, message = "Order ID is required." });
 			}
 
-			var result = await _orderService.CancelOrderAsync(payload["id"]);
-			if (!result)
-			{
-				return BadRequest(new { success = false, message = "Failed to cancel order." });
-			}
+			await _orderService.CancelOrderAsync(payload["id"]);
 			return Ok(new SuccessResponseDto("Order canceled successfully!"));
 		}
 	}

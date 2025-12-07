@@ -1,4 +1,5 @@
-﻿using Application.Interfaces.IServices;
+﻿using Application.Exceptions;
+using Application.Interfaces.IServices;
 using Domain.Entities.Orders;
 using Stripe;
 using Stripe.Checkout;
@@ -57,7 +58,11 @@ namespace Application.Services
             };
             var service = new RefundService();
             var refund = await service.CreateAsync(options);
-            return refund.Status == "succeeded";
+            
+            if (refund.Status != "succeeded")
+                throw new ApiException($"Refund failed: {refund.Status}");
+
+            return true;
         }
 
         public async Task<bool> VerifyPaymentAsync(string sessionId)

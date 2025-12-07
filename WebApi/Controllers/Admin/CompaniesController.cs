@@ -34,9 +34,6 @@ namespace WebApi.Controllers.Admin
         public async Task<IActionResult> GetById(int id)
         {
             var company = await _companyService.GetByIdAsync(id);
-            if (company == null)
-                return NotFound(new { success = false, message = $"No company found with Id = ({id})" });
-
             return Ok(company);
         }
 
@@ -54,10 +51,7 @@ namespace WebApi.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Update(int id, [FromBody] CompanyDto companyViewModel)
         {
-            var result = await _companyService.UpdateAsync(id, companyViewModel);
-            if (!result)
-                return NotFound(new { success = false, message = $"No company found with Id = ({id})" });
-
+            await _companyService.UpdateAsync(id, companyViewModel);
             return Ok(new { success = true, message = "Company updated successfully!" });
         }
 
@@ -66,10 +60,7 @@ namespace WebApi.Controllers.Admin
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _companyService.DeleteAsync(id);
-            if (!result)
-                return NotFound(new { success = false, message = $"No company found with Id = ({id})" });
-
+            await _companyService.DeleteAsync(id);
             return Ok(new { success = true, message = "Company deleted successfully!" });
         }
     }

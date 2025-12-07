@@ -8,9 +8,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
+using Application.Interfaces.IServices;
+
 namespace Infrastructure.Services
 {
-    public class JwtTokenService
+    public class JwtTokenService : IJwtTokenService
     {
         private readonly IConfiguration _config;
         private readonly UserManager<ApplicationUser> _userManager;

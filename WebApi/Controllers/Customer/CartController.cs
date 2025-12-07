@@ -4,7 +4,6 @@ using Application.Dtos.ShoppingCarts;
 using Application.Interfaces.IServices;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using System.Threading.Tasks;
 
 namespace WebApi.Controllers.Customer
@@ -16,23 +15,12 @@ namespace WebApi.Controllers.Customer
     public class CartController : ControllerBase
     {
         private readonly ICartService _cartService;
+        private readonly IUserContextService _userContextService;
 
-        public CartController(ICartService cartService)
+        public CartController(ICartService cartService, IUserContextService userContextService)
         {
             _cartService = cartService;
-        }
-
-        private int GetUserId()
-        {
-            var claimsIdentity = (ClaimsIdentity)User.Identity;
-            var userIdClaim = claimsIdentity?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            
-            if (string.IsNullOrEmpty(userIdClaim))
-            {
-                throw new UnauthorizedAccessException("User ID not found in token claims");
-            }
-            
-            return int.Parse(userIdClaim);
+            _userContextService = userContextService;
         }
 
         [HttpPost("add")]
@@ -40,8 +28,11 @@ namespace WebApi.Controllers.Customer
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<SuccessResponseDto>> AddToCart([FromBody] AddToCartDto dto)
         {
-            var userId = GetUserId();
-            var success = await _cartService.AddToCartAsync(userId, dto.BookId, dto.Quantity);
+            var userId = _userContextService.GetUserId();
+            if (!userId.HasValue)
+                return Unauthorized("User ID not found in token claims");
+
+            var success = await _cartService.AddToCartAsync(userId.Value, dto.BookId, dto.Quantity);
 
             if (!success) return BadRequest("Unable to add to cart.");
             return Ok(new SuccessResponseDto("Item added to cart"));
@@ -52,8 +43,11 @@ namespace WebApi.Controllers.Customer
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ShoppingCartDto>> Index()
         {
-            var userId = GetUserId();
-            var vm = await _cartService.GetCartAsync(userId);
+            var userId = _userContextService.GetUserId();
+            if (!userId.HasValue)
+                return Unauthorized("User ID not found in token claims");
+
+            var vm = await _cartService.GetCartAsync(userId.Value);
             return Ok(vm);
         }
 
@@ -62,8 +56,7 @@ namespace WebApi.Controllers.Customer
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<SuccessResponseDto>> IncrementQuantity(int cartId)
         {
-            var success = await _cartService.IncrementQuantityAsync(cartId);
-            if (!success) return BadRequest("Unable to increment quantity.");
+            await _cartService.IncrementQuantityAsync(cartId);
             return Ok(new SuccessResponseDto("Quantity incremented successfully."));
         }
 
@@ -72,8 +65,7 @@ namespace WebApi.Controllers.Customer
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<SuccessResponseDto>> DecrementQuantity(int cartId)
         {
-            var success = await _cartService.DecrementQuantityAsync(cartId);
-            if (!success) return BadRequest("Unable to decrement quantity.");
+            await _cartService.DecrementQuantityAsync(cartId);
             return Ok(new SuccessResponseDto("Quantity decremented successfully."));
         }
 
@@ -82,8 +74,7 @@ namespace WebApi.Controllers.Customer
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<SuccessResponseDto>> Delete(int cartId)
         {
-            var success = await _cartService.DeleteItemAsync(cartId);
-            if (!success) return NotFound("Item not found.");
+            await _cartService.DeleteItemAsync(cartId);
             return Ok(new SuccessResponseDto("Item deleted successfully."));
         }
 
@@ -92,8 +83,11 @@ namespace WebApi.Controllers.Customer
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ShoppingCartDto>> Summary()
         {
-            var userId = GetUserId();
-            var vm = await _cartService.GetSummaryAsync(userId);
+            var userId = _userContextService.GetUserId();
+            if (!userId.HasValue)
+                return Unauthorized("User ID not found in token claims");
+
+            var vm = await _cartService.GetSummaryAsync(userId.Value);
             return Ok(vm);
         }
 
@@ -102,9 +96,12 @@ namespace WebApi.Controllers.Customer
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<PlaceOrderResponseDto>> PlaceOrder()
         {
-            var userId = GetUserId();
+            var userId = _userContextService.GetUserId();
+            if (!userId.HasValue)
+                return Unauthorized("User ID not found in token claims");
+
             var domain = Request.Scheme + "://" + Request.Host.Value + "/";
-            var checkoutUrl = await _cartService.PlaceOrderAsync(userId, domain);
+            var checkoutUrl = await _cartService.PlaceOrderAsync(userId.Value, domain);
 
             if (!string.IsNullOrEmpty(checkoutUrl))
             {

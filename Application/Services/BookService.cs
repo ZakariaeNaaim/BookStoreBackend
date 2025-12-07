@@ -1,4 +1,5 @@
-﻿using Application.Dtos.Books;
+﻿using Application.Exceptions;
+using Application.Dtos.Books;
 using Application.Inerfaces.IRepositories;
 using Application.Inerfaces.IRepositories.Generic;
 using Application.Inerfaces.IRepositories.IBooks;
@@ -37,10 +38,19 @@ namespace Application.Services
             return await _readOnlyRepository.GetAllAsync();
         }
 
+        public async Task<Domain.Entities.Books.TbBook?> GetByIdAsync(int id)
+        {
+            var book = await _bookRepository.GetByIdAsync(id);
+             if (book == null)
+                throw new NotFoundException($"Book with ID {id} not found.");
+            return book;
+        }
+
         public async Task<bool> DeleteAsync(int id)
         {
             var book = await _bookRepository.GetByIdAsync(id);
-            if (book == null) return false;
+            if (book == null)
+                 throw new NotFoundException($"Book with ID {id} not found.");
 
             var images = await _bookImageRepository.FindAllAsync(x => x.BookId == id);
             _bookImageRepository.RemoveRange(images);
