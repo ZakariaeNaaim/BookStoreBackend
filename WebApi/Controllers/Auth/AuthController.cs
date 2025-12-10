@@ -60,7 +60,7 @@ namespace WebApi.Controllers.Auth
         [HttpGet("external-auth-callback")]
         public async Task<IActionResult> ExternalLoginCallback(string returnUrl = null, string remoteError = null)
         {
-            returnUrl = returnUrl ?? "http://localhost:4200/login";
+            returnUrl = returnUrl ?? "http://localhost:4200/identity/auth-callback";
             
             var response = await _authService.HandleExternalLoginCallback(returnUrl, remoteError);
 
